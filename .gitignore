@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+*.log
+.env*
+!.env.example
+server/data/
+backups/
+playwright-report/
+test-results/
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+artifacts/

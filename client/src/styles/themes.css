@@ -1,0 +1,71 @@
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --text: #f0f4ff;
+  --muted: #b5c2da;
+  --bg: #0e1526;
+  --surface: #19243a;
+  --surface-alt: #23304b;
+  --border: #34435d;
+  --green: #77d7a9;
+  --shadow: 0 4px 18px #0002;
+  --focus: #ffe600;
+}
+html[data-theme="dark"] .header,
+html[data-theme="dark"] .announcement {
+  color: #101f4e;
+}
+html[data-theme="dark"] .header input {
+  background: #fff;
+  color: #18223c;
+}
+html[data-theme="dark"] .category-tile {
+  color: #112449;
+}
+html[data-theme="dark"] .auth-story {
+  color: #fff;
+}
+html[data-theme="dark"] .filters .filter-note {
+  background: #253858;
+}
+html[data-theme="dark"] .product-photo {
+  background: #fff;
+}
+html[data-theme="dark"] .category-tag {
+  background: #edf3ff;
+  color: #334466;
+}
+html[data-theme="dark"] .payment-option.selected {
+  background: #183d72;
+}
+html[data-theme="dark"] .demo-alert {
+  background: #1c365a;
+  color: #d6e7ff;
+}
+html[data-theme="dark"] .badge.green {
+  background: #183f34;
+  color: #8fe3bd;
+}
+html[data-theme="dark"] .badge.orange {
+  background: #49351c;
+  color: #f6d29b;
+}
+html[data-theme="dark"] .badge.blue {
+  background: #203d6c;
+  color: #c2d9ff;
+}
+html[data-theme="dark"] .badge.gray {
+  background: #303b50;
+  color: #d5ddeb;
+}
+html[data-theme="dark"] .form-error {
+  background: #4b2430;
+  color: #ffcad3;
+}
+html[data-theme="dark"] .toast {
+  background: #1a4436;
+  color: #b8f3da;
+}
+html[data-theme="dark"] .toast.error {
+  background: #4b2430;
+  color: #ffcad3;
+}

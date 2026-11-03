@@ -1,0 +1,30 @@
+{
+  "name": "jm-store",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace server",
+    "build": "npm run build --workspace client",
+    "start": "node server/src/server.js",
+    "test": "node --test server/tests/unit/*.test.js",
+    "test:integration": "node --test --test-concurrency=1 server/tests/contract/*.test.js server/tests/integration/*.test.js",
+    "test:e2e": "npm run build && playwright test",
+    "db:migrate": "node server/scripts/migrate.js",
+    "db:seed": "node server/scripts/seed.js",
+    "admin:provision": "node server/scripts/provision-admin.js",
+    "db:backup": "node server/scripts/backup.js",
+    "db:reset-demo": "node server/scripts/reset-demo.js",
+    "setup:demo": "node server/scripts/setup-demo.js"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.56.1"
+  }
+}

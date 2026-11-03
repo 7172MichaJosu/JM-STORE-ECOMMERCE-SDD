@@ -1,0 +1,12 @@
+UPDATE product_images SET asset_path='/images/demo/monitor-jm.png' WHERE asset_path='/images/demo/monitor.jpg';
+UPDATE product_images SET asset_path='/images/demo/camera-jm.png' WHERE asset_path='/images/demo/camera.jpg';
+UPDATE product_images SET asset_path='/images/demo/shoes-jm.png' WHERE asset_path='/images/demo/shoes.jpg';
+UPDATE product_images SET asset_path='/images/demo/skincare-jm.png' WHERE asset_path='/images/demo/skincare.jpg';
+UPDATE product_images SET asset_path='/images/demo/watch-jm.png' WHERE asset_path='/images/demo/watch.jpg';
+UPDATE products SET name='Teclado compacto' WHERE sku='JM-003' AND version=1 AND name='Teclado mecánico compacto';
+UPDATE products SET name='Lámpara de pie' WHERE sku='JM-006' AND version=1 AND name='Lámpara de escritorio';
+UPDATE products SET name='Silla acolchada' WHERE sku='JM-007' AND version=1 AND name='Sillón de lectura';
+UPDATE products SET name='Escritorio de estudio' WHERE sku='JM-008' AND version=1 AND name='Organizador de escritorio';
+UPDATE products SET name='Kit de jardinería' WHERE sku='JM-010' AND version=1 AND name='Maceta decorativa';
+UPDATE products SET name='Mochila compacta diaria' WHERE sku='JM-014' AND version=1 AND name='Bolso de uso diario';
+CREATE TRIGGER payment_amount BEFORE INSERT ON simulated_payments WHEN NEW.amount_cents!=(SELECT total_cents FROM orders WHERE id=NEW.order_id) BEGIN SELECT RAISE(ABORT,'payment total mismatch'); END;

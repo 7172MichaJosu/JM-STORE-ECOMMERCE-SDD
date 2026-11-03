@@ -1,0 +1,3 @@
+CREATE TABLE carts(id INTEGER PRIMARY KEY,user_id INTEGER UNIQUE REFERENCES users(id),guest_session_id INTEGER UNIQUE REFERENCES sessions(id) ON DELETE CASCADE,version INTEGER NOT NULL DEFAULT 1,updated_at TEXT NOT NULL,CHECK((user_id IS NOT NULL)+(guest_session_id IS NOT NULL)=1));
+CREATE TABLE cart_items(cart_id INTEGER NOT NULL REFERENCES carts(id) ON DELETE CASCADE,product_id INTEGER NOT NULL REFERENCES products(id),quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99),PRIMARY KEY(cart_id,product_id));
+CREATE TRIGGER cart_limit BEFORE INSERT ON cart_items WHEN (SELECT COUNT(*) FROM cart_items WHERE cart_id=NEW.cart_id)>=100 BEGIN SELECT RAISE(ABORT,'cart limit'); END;
