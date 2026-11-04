@@ -1,0 +1,32 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "jm-store-ecommerce-sdd-staging",
+  "account_id": "",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [],
+  "assets": {
+    "directory": "../client/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api", "/api/*"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jm-store-ecommerce-sdd-staging-db",
+      "database_id": "",
+      "migrations_dir": "migrations",
+      "remote": false,
+    },
+  ],
+  "vars": {
+    "ENVIRONMENT": "staging",
+    "APP_ORIGIN": "http://localhost:8787",
+    "SESSION_NAMESPACE": "jm-sdd-local",
+    "DATABASE_IDENTITY": "local-only",
+    "REMOTE_ENABLED": "false",
+  },
+}

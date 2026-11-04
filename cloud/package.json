@@ -1,0 +1,20 @@
+{
+  "name": "cloud",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "wrangler dev --local --config wrangler.staging.jsonc --persist-to .wrangler/local",
+    "test": "vitest run --config vitest.config.js"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "helmet": "8.1.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.157.0",
+    "vitest": "4.1.12",
+    "@cloudflare/vitest-plugin": "1.5.1",
+    "miniflare": "5.20261103.0-beta"
+  }
+}

@@ -1,0 +1,30 @@
+// Public synthetic catalog; no runtime/database imports.
+export const categories = [
+  ["Tecnología", "tecnologia"],
+  ["Hogar", "hogar"],
+  ["Accesorios", "accesorios"],
+  ["Cuidado personal", "cuidado-personal"],
+  ["Deportes", "deportes"],
+];
+export const demoProducts = [
+  ["Portátil de estudio 15.6”", 1, 189900, "laptop", 18],
+  ["Auriculares inalámbricos", 1, 14900, "headphones", 24],
+  ["Teclado compacto", 1, 15900, "keyboard", 16],
+  ["Monitor de escritorio 24”", 1, 64900, "monitor-jm.png", 12],
+  ["Cámara instantánea", 1, 34900, "camera-jm.png", 8],
+  ["Lámpara de pie", 2, 7990, "lamp", 20],
+  ["Silla acolchada", 2, 59900, "chair", 6],
+  ["Escritorio de estudio", 2, 3990, "desk", 18],
+  ["Taza de cerámica", 2, 2490, "mug", 35],
+  ["Kit de jardinería", 2, 4590, "plant", 22],
+  ["Mochila urbana", 3, 12900, "backpack", 15],
+  ["Reloj de diseño minimalista", 3, 19900, "watch-jm.png", 10],
+  ["Lentes de sol", 3, 6990, "sunglasses", 14],
+  ["Mochila compacta diaria", 3, 8990, "bag", 0],
+  ["Set de cuidado facial", 4, 7990, "skincare-jm.png", 26],
+  ["Jabón artesanal", 4, 1990, "soap", 30],
+  ["Crema de manos", 4, 2990, "skincare-jm.png", 17],
+  ["Zapatillas deportivas", 5, 16900, "shoes-jm.png", 19],
+  ["Botella deportiva", 5, 4990, "bottle", 27],
+  ["Accesorios de entrenamiento", 5, 5990, "fitness", 12],
+];
