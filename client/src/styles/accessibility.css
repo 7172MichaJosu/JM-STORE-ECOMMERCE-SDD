@@ -73,3 +73,6 @@ html[data-theme="dark"] .kicker {
 html[data-theme="dark"] .footer-bottom > b {
   color: #8fb7ff;
 }
+html[data-theme="dark"] .text-button {
+  color: #8fb7ff;
+}

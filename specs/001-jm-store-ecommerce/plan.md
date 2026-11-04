@@ -1,6 +1,6 @@
-﻿# Implementation Plan: JM-STORE Ecommerce MVP
+# Implementation Plan: JM-STORE Ecommerce MVP
 
-**Branch**: `001-jm-store-ecommerce` (identificador Spec Kit; no hay repositorio Git local)
+**Branch**: `001-jm-store-ecommerce` (identificador Spec Kit)
 | **Date**: 2026-11-03 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/001-jm-store-ecommerce/spec.md`
@@ -13,8 +13,10 @@ Express concentra validación, autorización, precios y transacciones. Se preser
 las decisiones de Clarify: elección aprobado/rechazado sin cobros, rechazo persistido sin
 descontar stock, reintento válido, administrador provisionado y aprobación atómica.
 
-Los entregables de este comando son documentos de diseño. No existen todavía aplicación,
-migraciones ejecutables, pruebas implementadas ni comandos npm del producto.
+Este documento conserva el diseño aprobado durante Plan. La aplicación y sus pruebas
+se desarrollaron posteriormente en Implement; su estado actual se registra en
+[quickstart.md](quickstart.md) y [tasks.md](tasks.md). La rama Git existente y su commit WIP
+se preservan durante la continuación, sin crear commits adicionales.
 
 ## Technical Context
 
@@ -25,6 +27,9 @@ dependencias fijadas con lockfile durante Implement.
 Helmet y express-rate-limit; node:crypto, node:sqlite y Fetch integrados. Desarrollo:
 Playwright; node:test para unidades e integración. CSS propio, sin ORM ni librería global
 de estado. Investigación y justificaciones en [research.md](research.md).
+
+Implement añadió Lucide para iconos consistentes y `@axe-core/playwright` como dependencia
+de desarrollo para comprobar accesibilidad. No añaden servicios externos al runtime.
 
 **Storage**: SQLite local en `server/data/jm-store.sqlite`, WAL y FK activas; sesiones,
 usuarios, catálogo, carrito autenticado, pedidos, intentos y movimientos persistidos.
@@ -189,4 +194,3 @@ respuestas aceptadas se preservan literalmente en Clarifications.
 
 La revisión posterior a Phase 1 mantiene todos los gates en PASS. Siguiente artefacto
 autorizable: Tasks; este comando termina con los documentos de Plan.
-

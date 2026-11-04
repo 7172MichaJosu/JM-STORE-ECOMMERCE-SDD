@@ -1,10 +1,14 @@
 # Quickstart y validación: JM-STORE
 
-**Fecha**: 2026-11-03 | **Estado**: guía para la futura implementación.
+**Fecha**: 2026-11-03 | **Estado**: implementación local disponible; ver evidencia al final.
 
-Actualmente solo existen documentos SDD. Los scripts, paquetes y pruebas descritos aquí
-son contratos de ejecución que deberá crear Implement; no se pueden ejecutar todavía.
-No se han instalado paquetes, cargado fotografías ni creado una base de datos en Plan.
+Los scripts, paquetes y pruebas de esta guía están implementados. La aplicación usa
+SQLite persistente y assets locales. Las credenciales de administrador son privadas y
+se provisionan localmente; no están en este documento ni en el código público.
+
+Para una instalación nueva se puede usar `npm ci`, `npm run setup:demo`, `npm run build`
+y `npm start`. En una instalación existente se conservan su base, configuración y cuenta
+administrativa; continuar con `npm start` después de compilar los cambios.
 
 ## Requisitos de entorno
 
@@ -14,13 +18,13 @@ No se han instalado paquetes, cargado fotografías ni creado una base de datos e
   funciona con assets y datos locales, sin pasarela, correo ni servicio de fotografías.
 - Puertos 3001 para Express y 5173 para Vite durante desarrollo; demo compilada en 3001.
 
-## Preparación prevista
+## Preparación manual
 
-Desde la raíz del proyecto, después de Implement y con lockfile disponible:
+Desde la raíz del proyecto y con lockfile disponible:
 
 ```powershell
 npm ci
-Copy-Item .env.example .env.local
+if (-not (Test-Path .env.local)) { Copy-Item .env.example .env.local }
 ```
 
 Completar `.env.local` localmente antes de iniciar. El backend carga ese archivo desde
@@ -104,7 +108,7 @@ Los cambios operativos son manuales y de demostración, no afirman transporte re
 
 ## Pruebas previstas
 
-Los siguientes scripts se crearán posteriormente. Cada ejecución usa DB temporal y no
+Los siguientes scripts están disponibles. Cada ejecución usa DB temporal y no
 modifica la base de demostración; el arranque de pruebas debe rechazar DATABASE_PATH de demo.
 
 ```powershell
@@ -137,13 +141,13 @@ duración y evidencia. Los objetivos de rendimiento de Plan se miden con 100 pro
 
 ## Respaldo, restauración y reset
 
-El futuro script `npm run db:backup` exige API detenida, crea carpeta fechada bajo
+El script `npm run db:backup` exige API detenida, crea carpeta fechada bajo
 `backups/` y copia juntos SQLite y archivos WAL/SHM que existan después del cierre.
-La documentación final indicará la ruta creada sin exponer datos. No copiar solo DB
+El comando indica la ruta creada sin exponer datos. No copiar solo DB
 mientras la aplicación escribe. Para restaurar, detener API, respaldar el estado actual,
 reponer el conjunto completo de un mismo backup y ejecutar verificación de integridad.
 
-`npm run db:reset-demo -- --confirm JM-STORE-DEMO` será un comando manual restringido
+`npm run db:reset-demo -- --confirm JM-STORE-DEMO` es un comando manual restringido
 al entorno de demo. Exige proceso detenido, valida que la ruta esté dentro de server/data,
 hace backup, reconstruye esquema/seed y vuelve a requerir provisión segura de admin.
 No se ejecuta en Plan ni como parte de start, migrate o seed.
@@ -159,3 +163,66 @@ No se ejecuta en Plan ni como parte de start, migrate o seed.
 
 Detalle de estados, límites y formatos: [data-model.md](data-model.md) y
 [contracts/api.md](contracts/api.md). Diseño visual: [contracts/ui.md](contracts/ui.md).
+
+## Resultados de Implement — 2026-11-03
+
+Se retomó el WIP `d98a94d` conservando los archivos y datos existentes. No se reinició el
+proyecto, no se regeneró la base de demostración y no se crearon commits. Se corrigieron
+el ancho del panel a 360 px, el contraste de sus botones en oscuro y la notificación de
+bienvenida del administrador. También se actualizó esta guía y la procedencia de imágenes.
+
+| Verificación ejecutada | Resultado |
+|---|---|
+| `npm run build` | PASS: build de producción generado por Vite |
+| `npm test` | 3/3 pruebas de dinero, firma y contraseñas |
+| `npm run test:integration` | 20/20 pruebas de contratos, seguridad, persistencia, compra y operación |
+| `npx playwright test` | 9/9 recorridos y comprobaciones en Chromium |
+| Revisión adicional del cambio de bienvenida ADMIN | 2/2 recorridos administrativos repetidos correctamente |
+| Carga local de referencia | 100 productos, 20 sesiones, p95 de búsqueda 374 ms; objetivo <=2000 ms |
+| Persistencia al cerrar y abrir otra instancia de API | Cliente, dirección, pedido, pago y stock conservados |
+| Respaldo/reset | Integridad y recuperación comprobadas en DB temporal; rutas y proceso activo protegidos |
+
+Son **32 pruebas automatizadas distintas** aprobadas: 3 de unidades, 20 de API/integración
+y 9 de navegador. Las dos repeticiones administrativas no se suman de nuevo al total.
+El error interno emitido durante la prueba de rollback es un fallo inyectado
+intencionadamente; la prueba verifica que no quedan cambios parciales.
+
+La comprobación axe de WCAG 2 A/AA y 2.1 AA no detectó infracciones en las páginas revisadas:
+portada, perfil, direcciones, carrito e historial, y todas las secciones principales del
+panel, a 360/1280 px en claro/oscuro. El checkout también fue revisado por axe durante el
+recorrido de teclado. Esto es evidencia automática de esas pantallas y estados, no una
+certificación de accesibilidad para todos los contenidos que pueda cargar un administrador.
+
+### Trazabilidad de requisitos funcionales
+
+| Requisitos | Implementación y evidencia |
+|---|---|
+| FR-001..003 | Catálogo, categorías, buscador, filtros, detalle e imágenes; catalog.contract.test.js, catalog.test.js y catalog.spec.js |
+| FR-004..005 | Cantidades, eliminación, precios vigentes y carrito persistente; checkout.contract.test.js, recovery.test.js y checkout.spec.js |
+| FR-006..008 | Registro, sesión, roles, perfil y direcciones; auth.contract.test.js, account.test.js, security.test.js y account.spec.js |
+| FR-009..012 | Resumen firmado, pagos simulados, pedidos y reintento; checkout-transaction.test.js, recovery.test.js y checkout.spec.js |
+| FR-013..014 | Productos, biblioteca de imágenes, categorías, promociones, precios, stock y clientes; admin-crud.test.js, admin.test.js y admin-complete.spec.js |
+| FR-015..016 | Estados permitidos, historial y snapshots persistidos; admin.test.js, persistence.test.js y admin-complete.spec.js |
+| FR-017 | Céntimos enteros y presentación S/ con dos decimales; money.test.js y contratos de catálogo/checkout |
+| FR-018..019 | Temas, responsive, teclado, foco, carrusel manual y reduced-motion; responsive-accessibility.spec.js y keyboard.spec.js, más revisión de implementación |
+| FR-020 | Datos demo, manifiesto/licencias e imágenes generadas identificadas; revisión visual y ATTRIBUTION.md; promociones calculadas desde DB |
+| FR-021..023 | Validaciones, CSRF, permisos, rollback y datos consistentes; security.test.js, recovery.test.js, persistence.test.js y operaciones CRUD |
+| FR-024 | Scripts reproducibles y recorrido completo de cliente/administrador; todas las suites anteriores |
+
+### Criterios de éxito y límites de la evidencia
+
+| Criterio | Estado de validación |
+|---|---|
+| SC-001 | **PENDIENTE MANUAL**: no se realizó una sesión con 10 participantes; no se afirma el resultado 9/10 |
+| SC-002 | El recorrido automatizado de compra termina en menos de 4 min; no se midió todavía tiempo de personas |
+| SC-003 | PASS en la muestra automatizada: totales/estados consistentes, incluido cierre y reapertura de API |
+| SC-004 | PASS en las pruebas de rechazo, stock concurrente, repetición, cambio de precio y rollback |
+| SC-005 | PASS en las operaciones probadas: acceso y titularidad controlados por servidor |
+| SC-006 | PASS en los recorridos revisados a 360/1280 px; sin overflow de página, con tablas/menús desplazables dentro de su región |
+| SC-007 | PASS en importes y totales de la muestra de catálogo y compra; moneda PEN, presentación S/ |
+| SC-008 | Revisión de contenido completada: sin cuotas, envíos, estrellas ni beneficios ficticios; imágenes referenciales identificadas |
+
+La revisión T082 documenta el pendiente humano SC-001 y la ausencia de medición humana
+de SC-002. Completar tareas técnicas no sustituye esa aceptación del examen. La fecha
+original de ratificación de la Constitution permanece como TODO administrativo de su
+propio workflow; no se inventó durante Implement. La feature se mantiene abierta.

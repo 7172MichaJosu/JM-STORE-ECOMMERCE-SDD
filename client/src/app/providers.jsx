@@ -49,7 +49,11 @@ export function Providers({ children }) {
   async function authenticate(path, body) {
     const s = await api(path, { method: "POST", body });
     setUser(s.user);
-    notify(s.cartNotice || "Bienvenido a JM-STORE");
+    notify(
+      s.user.role === "ADMIN"
+        ? "Bienvenido al panel JM-STORE"
+        : s.cartNotice || "Bienvenido a JM-STORE",
+    );
     return s.user;
   }
   async function logout() {

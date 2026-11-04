@@ -185,17 +185,17 @@ description: "Tareas para implementar JM-STORE según Spec Kit"
 
 ### Tests for User Story 5
 
-- [ ] T069 [P] [US5] Añadir `tests/e2e/responsive-accessibility.spec.js` para 360/1280 px, foco visible, flujo teclado, labels, contraste AA, tema persistido y movimiento reducido en rutas cliente/admin.
-- [ ] T070 [P] [US5] Añadir fixtures/viewport a `playwright.config.js` y `tests/e2e/fixtures/accessibility.js` sin cambiar reglas de negocio ni datos de producción.
+- [X] T069 [P] [US5] Añadir `tests/e2e/responsive-accessibility.spec.js` para 360/1280 px, foco visible, flujo teclado, labels, contraste AA, tema persistido y movimiento reducido en rutas cliente/admin.
+- [X] T070 [P] [US5] Añadir fixtures/viewport a `playwright.config.js` y `tests/e2e/fixtures/accessibility.js` sin cambiar reglas de negocio ni datos de producción.
 
 ### Implementation for User Story 5
 
-- [ ] T071 [US5] Implementar tokens de color, superficies, tipografía, espaciado y foco AA en `client/src/styles/tokens.css`, `themes.css` y `base.css` con amarillo/azul/blanco y tema oscuro legible.
-- [ ] T072 [US5] Implementar `client/src/app/ThemeProvider.jsx` con preferencia del sistema inicial, selector claro/oscuro y persistencia solo del tema en localStorage; no guardar sesión ni credenciales en navegador.
-- [ ] T073 [US5] Aplicar layout 360..1280 px, grillas, menú móvil, product cards, tablas adaptables y mini carrito en `client/src/styles/layout.css` y `components.css` sin overflow horizontal.
-- [ ] T074 [US5] Implementar `client/src/components/HeroCarousel.jsx`, CTA al catálogo real y CategoryTiles con controles de teclado/foco, sin avance automático, banners genéricos y sin descuentos no configurados.
-- [ ] T075 [US5] Añadir estados accesibles de foco/hover/error/stock y anuncios `aria-live` en `client/src/components/` y `client/src/styles/accessibility.css`; respetar `prefers-reduced-motion` con animaciones de 150..250 ms o apagadas.
-- [ ] T076 [US5] Corregir cualquier prueba fallida de `tests/e2e/responsive-accessibility.spec.js` y completar la evaluación de contraste/contenido en rutas cliente/admin.
+- [X] T071 [US5] Implementar tokens de color, superficies, tipografía, espaciado y foco AA en `client/src/styles/tokens.css`, `themes.css` y `base.css` con amarillo/azul/blanco y tema oscuro legible.
+- [X] T072 [US5] Implementar `client/src/app/ThemeProvider.jsx` con preferencia del sistema inicial, selector claro/oscuro y persistencia solo del tema en localStorage; no guardar sesión ni credenciales en navegador.
+- [X] T073 [US5] Aplicar layout 360..1280 px, grillas, menú móvil, product cards, tablas adaptables y mini carrito en `client/src/styles/layout.css` y `components.css` sin overflow horizontal.
+- [X] T074 [US5] Implementar `client/src/components/HeroCarousel.jsx`, CTA al catálogo real y CategoryTiles con controles de teclado/foco, sin avance automático, banners genéricos y sin descuentos no configurados.
+- [X] T075 [US5] Añadir estados accesibles de foco/hover/error/stock y anuncios `aria-live` en `client/src/components/` y `client/src/styles/accessibility.css`; respetar `prefers-reduced-motion` con animaciones de 150..250 ms o apagadas.
+- [X] T076 [US5] Corregir cualquier prueba fallida de `tests/e2e/responsive-accessibility.spec.js` y completar la evaluación de contraste/contenido en rutas cliente/admin.
 
 **Checkpoint**: el recorrido completo funciona con ambos temas y a ambos anchos antes de aceptar detalles secundarios de acabado.
 
@@ -205,12 +205,12 @@ description: "Tareas para implementar JM-STORE según Spec Kit"
 
 **Purpose**: Preparar inicio repetible, seguridad final, documentación del examen y validación de criterios transversales.
 
-- [ ] T077 [P] Crear `server/scripts/backup.js` para cerrar/validar DB, copiar conjunto SQLite/WAL/SHM consistente, escribir destino y nunca guardar copias bajo Git.
-- [ ] T078 Crear `server/scripts/reset-demo.js` con confirmación `JM-STORE-DEMO`, proceso parado, ruta permitida dentro de `server/data/` y backup previo; prohibir uso desde arranque normal.
-- [ ] T079 [P] Actualizar `README.md` con setup, `.env.local`, seed/provision admin, seguridad de secretos, backup/reset, límites del pago simulado y enlaces Spec Kit.
-- [ ] T080 [P] Crear `client/public/images/demo/ATTRIBUTION.md` con archivo, descripción, origen, autor, licencia/permiso y fecha para cada imagen distribuida; reemplazar assets que no cumplan licencia o parezcan representar falsamente un producto.
-- [ ] T081 Ejecutar build de producción, node:test, integración, E2E, flujo `quickstart.md` y carga de referencia de 100 productos/20 sesiones; documentar resultado real y atender cualquier fallo en `specs/001-jm-store-ecommerce/quickstart.md`.
-- [ ] T082 Revisar rastreo FR-001..024 y SC-001..008 en `specs/001-jm-store-ecommerce/quickstart.md`; solo marcar cada criterio satisfecho con evidencia y guardar cuestiones restantes en el mismo artefacto.
+- [X] T077 [P] Crear `server/scripts/backup.js` para cerrar/validar DB, copiar conjunto SQLite/WAL/SHM consistente, escribir destino y nunca guardar copias bajo Git.
+- [X] T078 Crear `server/scripts/reset-demo.js` con confirmación `JM-STORE-DEMO`, proceso parado, ruta permitida dentro de `server/data/` y backup previo; prohibir uso desde arranque normal.
+- [X] T079 [P] Actualizar `README.md` con setup, `.env.local`, seed/provision admin, seguridad de secretos, backup/reset, límites del pago simulado y enlaces Spec Kit.
+- [X] T080 [P] Crear `client/public/images/demo/ATTRIBUTION.md` con archivo, descripción, origen, autor, licencia/permiso y fecha para cada imagen distribuida; reemplazar assets que no cumplan licencia o parezcan representar falsamente un producto.
+- [X] T081 Ejecutar build de producción, node:test, integración, E2E, flujo `quickstart.md` y carga de referencia de 100 productos/20 sesiones; documentar resultado real y atender cualquier fallo en `specs/001-jm-store-ecommerce/quickstart.md`.
+- [X] T082 Revisar rastreo FR-001..024 y SC-001..008 en `specs/001-jm-store-ecommerce/quickstart.md`; solo marcar cada criterio satisfecho con evidencia y guardar cuestiones restantes en el mismo artefacto.
 
 **Definition of Done verificable**: recorrido registro -> catálogo -> carrito -> dirección -> rechazo sin cambio stock -> reintento aprobado -> pedido confirmado con un solo descuento -> panel cambia estado -> cliente ve historial, todo tras reinicio; todos los gates de seguridad y rol pasan; 360/1280 px, temas, teclado y reduced motion verificados; importes S/ consistentes; seed, imágenes y claims comerciales con fuente comprobable; tareas FR/SC mapeadas y sin secretos versionados.
 
@@ -296,4 +296,15 @@ No tratar US1 como único MVP de entrega final: el alcance aprobado para el exam
 - Un rechazo simulado deja el pedido pendiente con intento REJECTED; aprobación confirma y descuenta stock una vez; no hay cobro real.
 - Versiones/estados válidos y límites de campos se describen con sus restricciones en las tareas de migración/validación para evitar decisiones implícitas durante Implement.
 - Confirmar que ningún secreto, base de datos, sesión, datos personales de demo ni backup entra al control de versiones.
-- Este documento termina en Tasks; `$speckit-implement` es el siguiente comando separado y no se invoca aquí.
+- La lista se generó en Tasks y se ejecutó en Implement; la evidencia actual se registra abajo. La feature permanece abierta.
+
+## Verificación de Implement — 2026-11-03
+
+Las 82 tareas técnicas están implementadas y verificadas. Se aprobaron 3 pruebas de
+unidades, 20 de API/integración y 9 de navegador; el build de producción es correcto.
+Evidencia, alcance de las pruebas y trazabilidad FR/SC: [quickstart.md](quickstart.md).
+
+La aceptación con 10 participantes (SC-001) y la medición humana de tiempo de SC-002
+siguen pendientes. T082 corresponde a la revisión y registro de esos criterios, no a
+afirmar que hubo participantes. No se cierra la feature ni se crea un commit adicional;
+se conserva el WIP `d98a94d` y los archivos anteriores.

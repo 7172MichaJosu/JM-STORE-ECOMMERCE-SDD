@@ -718,6 +718,8 @@
   padding-block: 30px 55px;
 }
 .admin-sidebar {
+  min-width: 0;
+  max-width: 100%;
   padding: 23px 14px;
   align-self: start;
   position: sticky;
@@ -2154,7 +2156,7 @@ td b {
     font-size: 9px;
   }
   .admin-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 25px;
     padding-block: 20px;
   }
