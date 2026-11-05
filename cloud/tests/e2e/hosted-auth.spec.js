@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
-test("staging alojado: registro y login scrypt sin 1102 ni error de memoria", async ({
+test("staging alojado: registro y login Firebase con cookies seguras", async ({
   page,
   context,
 }) => {
   const email = `${randomUUID()}@example.test`;
-  const password = randomUUID();
+  const password = "T!" + randomUUID() + "Aa8";
   const timings = {};
 
   await page.goto("/registro");

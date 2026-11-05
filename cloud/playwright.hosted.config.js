@@ -6,7 +6,10 @@ if (!origin || new URL(origin).origin !== origin || !origin.endsWith(".workers.d
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["customer-store.spec.js", "hosted-auth.spec.js"],
+  testMatch: ["customer-store.spec.js", "hosted-auth.spec.js", "admin-commerce.spec.js"],
+  // The API commerce suite creates isolated products for rejected/retried payments.
+  // Avoid spending stock from existing catalogue items in the browser suite.
+  grep: /Workers: assets|staging|panel completo/,
   workers: 1,
   timeout: 90000,
   expect: { timeout: 20000 },

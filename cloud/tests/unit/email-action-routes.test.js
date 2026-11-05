@@ -1,13 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { apiRoutes } from "../../src/api.js";
+import { responseContext } from "../../src/http/router.js";
 
 describe("Firebase email action route wiring", () => {
-  it("mounts the explicit POST confirmation under /auth/email-change for Firebase auth mode", () => {
-    const api = apiRoutes();
-    const mounted = api.stack.find((layer) => layer.matchers?.some((match) => match("/auth/email-change/confirm")?.path === "/auth/email-change"));
-    expect(mounted).toBeTruthy();
-    const endpoint = mounted.handle.stack.find((layer) => layer.route?.path === "/confirm");
-    expect(endpoint?.route?.methods?.post).toBe(true);
-    expect(endpoint?.route?.methods?.get).toBeUndefined();
+  it("accepts explicit POST confirmation but never applies an action through GET", async () => {
+    const req = { path: "/auth/email-change/confirm", method: "POST", params: {}, body: {}, get: () => null,
+      socket: { remoteAddress: "local" }, config: { environment: "local", firebase: {}, rateSecret: "synthetic-rate-key" }, db: { first: vi.fn(async () => ({ count: 1 })) } };
+    await expect(apiRoutes()(req, responseContext())).rejects.toMatchObject({ code: "VALIDATION" });
+    req.method = "GET"; req.db.first.mockClear(); const done = vi.fn();
+    await apiRoutes()(req, responseContext(), done);
+    expect(done).toHaveBeenCalledOnce(); expect(req.db.first).not.toHaveBeenCalled();
   });
 });

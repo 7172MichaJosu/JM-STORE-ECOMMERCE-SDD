@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { checkTarget } from "./targets.js";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const target = await checkTarget(process.argv.slice(2));
@@ -29,16 +29,28 @@ if (
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const playwright = join(root, "node_modules", "playwright", "cli.js");
+const admin = JSON.parse(await readFile(new URL("../private/staging-synthetic-admin.json", import.meta.url), "utf8"));
+if (!admin.synthetic || !/^jm-sdd-stage-[\da-f-]+@example\.test$/.test(admin.email)) throw Error("Synthetic ADMIN required; personal account prohibited.");
 const result = spawnSync(
   process.execPath,
-  [playwright, "test", "--config", "cloud/playwright.hosted.config.js"],
+  [playwright, "test", "--config", "cloud/playwright.hosted.config.js", "--reporter", "json"],
   {
     cwd: root,
-    stdio: "inherit",
+    stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", maxBuffer: 20 * 1024 * 1024,
     env: {
       ...process.env,
       JM_STORE_STAGING_ORIGIN: target.origin,
+      TEST_ADMIN_EMAIL: admin.email,
+      TEST_ADMIN_PASSWORD: admin.password,
     },
   },
 );
+await writeFile(new URL("../private/hosted-playwright-results.json", import.meta.url), result.stdout || "{}", { mode: 0o600 });
+try {
+  const report = JSON.parse(result.stdout);
+  const tests = [];
+  function visit(suites) { for (const suite of suites || []) { for (const spec of suite.specs || []) tests.push({ title: spec.title, passed: spec.ok, statuses: spec.tests.flatMap(test => test.results.map(run => run.status)) }); visit(suite.suites); } }
+  visit(report.suites);
+  console.log(JSON.stringify({ tests, stats: report.stats, credentialsPrinted: false, detailedReportPrivate: true }));
+} catch { console.error(JSON.stringify({ reportUnavailable: true, exitCode: result.status, privateOutputWithheld: true })); }
 process.exitCode = result.status ?? 1;

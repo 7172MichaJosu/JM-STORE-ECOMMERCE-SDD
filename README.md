@@ -1,5 +1,23 @@
 # JM-STORE
 
+## Demostración publicada en Cloudflare
+
+**Staging:** https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev
+
+Estado del 5 de noviembre de 2026 para entregar el 6 a las 08:00 (America/Lima):
+Fetch nativo, Firebase Spark y D1 persistente. El ADMIN personal está habilitado en
+`/admin/ingresar`; el registro público crea clientes. Funcionan catálogo/búsqueda,
+carrito, perfil/direcciones, compras/pagos simulados, historial/seguimiento,
+administración y cambio de contraseña. **El cambio de correo continúa deshabilitado.**
+
+Pruebas aprobadas: 134 locales, 71 comprobaciones API alojadas y 3 E2E de navegador.
+CPU real de 146 invocaciones de tail: máximo 9 ms; Analytics inicial: P99 de bucket
+9.912 ms frente a 10 ms. Se acredita la muestra; carga/memoria y aceptación integral
+siguen pendientes. No se declara producción ni feature completamente terminada.
+
+[Evidencia, versión y pendientes](cloud/deploy/native-fetch-validation.md).
+Las instrucciones siguientes corresponden al modo local independiente.
+
 Tienda de demostración para el examen. React/Vite, Express y SQLite persistente.
 Requiere Node 24.15+ (rama 24) y npm 11. Los pagos son simulados, sin cobros reales.
 

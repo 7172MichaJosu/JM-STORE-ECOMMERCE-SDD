@@ -236,10 +236,25 @@ JM-STORE en ambas dimensiones y temas; la accesibilidad se limita a pantallas ve
 
 ## Phase 8: Polish, datos reales y corte controlado
 
+### Incremento urgente autorizado: Fetch nativo y demostración (2026-11-05)
+
+Este incremento sigue la revisión de Plan del 2026-11-05. No modifica las marcas
+históricas ni considera aprobados los requisitos pendientes. Las tareas T106–T112 se
+ejecutan antes de continuar la aceptación alojada; el bloqueo de correo puede permanecer
+para la entrega del 6 de noviembre a las 08:00 America/Lima. No se reconfigura ADMIN.
+
+- [X] T106 [US1] Escribir y ejecutar en rojo contratos de dispatcher Fetch, prefijos/params, errores async, cookies, HEAD y parser limitado en `cloud/tests/unit/native-http.test.js` y `cloud/tests/contract/native-api.test.js`.
+- [X] T107 [US1] Implementar dispatcher/contexto Request–Response en `cloud/src/http/`, adaptar factories de rutas cloud y sustituir la entrada Express/Node por Fetch en `cloud/src/app.js` y `cloud/src/worker.js`; conservar seguridad, contratos y repositorios.
+- [X] T108 [US1] Aprobar suites cloud y E2E Firebase/local, build/dry-run y regresión SQLite usando bases temporales; verificar ausencia de puente Node/Express en bundle y hashes SQLite originales.
+- [X] T109 [US1] Respaldar y restaurar/verificar staging; publicar Fetch solo al Worker nuevo preservando secretos, namespace, ADMIN y datos; medir primera invocación de registro tras publicación y recorridos calientes reales con cuentas sintéticas; documentar límites de la muestra sin equipararla a estrés integral.
+- [X] T110 [US1] Completar pruebas alojadas cliente y administración: búsqueda/carrito/direcciones, pago rechazado y aprobado, stock/idempotencia, CRUD/seguimiento y cambio separado de password con revocación sobre ADMIN sintético; respetar Free/Spark y no usar la cuenta personal.
+- [X] T111 Documentar evidencia actual, aptitud de demostración y pendientes explícitos (correo, migración real, producción, pruebas manuales no realizadas) en `cloud/deploy/`, README y quickstart; actualizar solo tareas verificadas.
+- [ ] T112 Revisar todo el contenido Git publicable y el historial por secretos/datos privados; commit/push autorizado a `JM-STORE-ECOMMERCE-SDD` cuando pasen las pruebas críticas; verificar remoto y árbol limpio, sin deploy de producción.
+
 **Purpose**: demostrar restauración y cuotas, conectar Workers Builds y abrir solo después
 de completar stories y gates. El target remoto siempre es explícito.
 
-- [ ] T074 [P] Ejecutar `npm run build`, `npm test`, `npm run test:integration`, `npm run test:e2e`, `npm run cloud:test` y `npm run cloud:test:e2e`; guardar resultados y corregir fallos en `specs/002-cloudflare-workers-d1/quickstart.md`. Ejecución local completa 2026-11-05: 3 unitarias, 20 integración, 9 E2E SQLite, 82 cloud, 8 E2E cloud y 7 E2E Firebase aprobadas; build/dry-run aprobados. Se conserva pendiente la aceptación de Phase 8 por sus dependencias R-AUTH/R-EMAIL no aprobadas.
+- [X] T074 [P] Ejecutar build y todas las suites locales; resultados actuales 2026-11-05: 3 unitarias, 20 integración, 9 E2E SQLite, 87 cloud, 8 E2E cloud y 7 E2E Firebase aprobadas (134 total); build/dry-run aprobados. El incremento autorizado permite concluir regresión independiente de correo; esta marca no aprueba aceptación integral, R-EMAIL, migración ni producción.
 - [ ] T075 [P] Medir Firebase sin KDF de password en Worker, error1102, CPU/memoria, llamadas proveedor, D1 filas/subrequests y p95 búsqueda con 100 productos/20 sesiones en cloud/tests/performance/; aprobar R-AUTH solo si Worker Free cumple con margen; registrar límites reales en specs/002-cloudflare-workers-d1/quickstart.md.
 - [ ] T076 [P] Escanear secretos, `.dev.vars`, snapshots, SQLite, exports, PII y permisos de archivos en el tree/GitHub workflow mediante `cloud/tests/security/repository-secrets.test.js`; corregir `.gitignore`/config antes de usar credenciales.
 - [ ] T077 Ensayar export diario, Time Travel, restore staging, namespaces, expiración sesiones, firma quote y conciliación de escrituras posteriores en `cloud/tests/migration/recovery.test.js`; documentar tiempos y RPO/RTO en `cloud/README.md`.
@@ -431,3 +446,95 @@ R-AUTH NO APROBADO: registro sigue por encima de 10 ms. Se detuvieron nuevos ens
 Alternativa sin costo a evaluar antes de implementar: conservar React, Firebase Spark, D1 y repositorios/reglas, sustituyendo solo la entrada HTTP cloud Express/Node por Fetch nativo. Exige reconciliar Plan/tareas y volver a medir, no garantiza por s? sola CPU. No se realiz? ese cambio ni se alteraron Spec/Plan/Constitution. Detalles y fuentes oficiales en cloud/deploy/cpu-optimization.md.
 
 Conteo conservado: 68/105 tareas completas y 37 pendientes. T074 tiene todas las suites locales ejecutadas, pero mantiene aceptaci?n Phase 8 pendiente por dependencias; T034/T075/T103 bloqueadas por CPU, T102/R-EMAIL por configuraci?n de enlaces, T104/T105 y datos reales bloqueados. Revisiones manuales no realizadas siguen pendientes. Sin producci?n, commit, push, cambio del Worker antiguo ni modificaci?n de SQLite real.
+
+### Administrador personal autorizado — 2026-11-05
+
+Operación acotada solicitada por el propietario para su UID de Firebase; traza FR-014
+y Plan (roles en D1, vínculo por UID verificado y provisión privada). No es migración
+de SQLite ni habilita registro público de administradores. Checklists sin cambios:
+requirements 16/16, free-staging 0/16. Esta autorización no aprueba gates pendientes.
+
+Firebase administrativo confirmó proyecto correcto/activo, Spark sin facturación,
+Identity Platform no activado, Email/Password y UID activo con proveedor password.
+No había claims ADMIN reconocidos ni cuenta D1 vinculada al UID/correo. No se solicitaron
+passwords ni se emitieron custom tokens para simular al propietario.
+
+Antes de escribir: export privado de 56,357 bytes, restauración de 27 tablas,
+integrity_check ok, FK 0 y recuentos iguales. Digest verificado antes de la escritura.
+Se preservó el procedimiento sintético existente y se adaptó su patrón de provisión
+en una operación privada restringida al único UID autorizado.
+
+Se añadió exactamente una cuenta FIREBASE activa ADMIN con claim ACCOUNT. Las 10
+cuentas previas y sus claims se compararon con el respaldo y permanecieron iguales;
+total D1 posterior 11, FK 0. Consulta independiente confirmó ADMIN y UID exacto.
+Identidad personal, procedimiento detallado y respaldos solo en cloud/private ignorado,
+sin passwords ni valores de tokens en documentos públicos.
+
+Primera comprobación: 0 sesiones activas del propietario. Aprovisionamiento verificado;
+posteriormente el propietario confirmó que ingresó y vio el panel. Verificación
+independiente del 2026-11-05 a las 16:20:31 UTC: ADMIN activo por UID exacto, 1 sesión
+vigente con namespace/auth_version de staging correctos y FK 0. Login administrativo
+personal verificado sin solicitar ni leer contraseña, cookies o tokens.
+[Procedimiento y evidencia](../../cloud/deploy/admin-provisioning.md).
+
+No se desplegó código ni modificaron Worker antiguo/producción, planes o SQLite original
+(tres hashes iguales). R-AUTH/R-EMAIL y guard de CPU siguen bloqueados. Revisiones
+manuales/aceptación integral pendientes. Conteo conservado: 68/105 completas, 37
+pendientes. Sin commit ni push en esta operación.
+
+### Entrega de demostración con Fetch nativo — 2026-11-05
+
+Autorización vigente: actualizar Plan/Tasks antes del cambio de arquitectura, implementar
+y medir staging, y publicar avances en GitHub tras pasar pruebas críticas. Entrega el
+6 de noviembre a las 08:00 America/Lima. No se repitió la provisión ADMIN. Checklist
+free-staging conserva sus 16 marcadores pendientes; la autorización de este incremento
+no es una aprobación de esa revisión manual ni de toda la feature.
+
+T106 tuvo rojo inicial por dispatcher inexistente y contrato de parser; verde después
+de T107. Cloud ahora usa Fetch directo, sin Express/Helmet/puente Node en bundle, sin
+dependencias nuevas. Se conservan todos los handlers/repositorios y controles, incluyendo
+CSRF/Origin, rate limit, rol D1, firmas, cookies y revocación Firebase/D1. Plan, Tasks,
+contratos y research quedaron coherentes con esta decisión antes de publicar.
+
+T074/T108: 87 cloud, 7 E2E Firebase, 8 E2E cloud, 3 unitarias SQLite, 20 integración
+SQLite y 9 E2E SQLite aprobadas (134 total); build/dry-run correctos. Bundle 121.90 KiB
+frente a 1,293.52 KiB. No incluye httpServerHandler ni Express. Tres archivos SQLite
+originales comparados por hash: intactos.
+
+T109: export/restauración previa 60,250 bytes, 27 tablas, integridad ok, FK 0 y recuentos
+iguales. Versión staging `76534b2c-9ab0-402b-8c77-617112fdbf8a`, D1 OPEN, namespace y
+secretos conservados. Comparación con respaldo: 10 cuentas originales ajenas al ADMIN
+de pruebas permanecieron exactamente iguales, incluida la personal; FK 0. El ADMIN
+sintético solo cambió su propia contraseña/versión en la prueba autorizada.
+
+T110: 40/40 comprobaciones API de compra/roles/password, 31/31 de CRUD adicional y 3/3
+E2E reales alojados (94.125 s, cero omitidos/reintentos). REJECTED no descuenta stock;
+APPROVED descuenta una vez y replay no duplica. Historial/seguimiento, base de precio,
+imágenes, promociones, movimientos, clientes y bajas lógicas verificados. Pedido
+conserva snapshots después de la baja. Password sintético exige actual, revoca otra
+sesión, rechaza anterior y acepta nueva; la cuenta personal no se utilizó.
+
+CPU de plataforma en ejecuciones aprobadas: 40+75+31=146 invocaciones tail, máximo 9 ms
+(rangos 2–9, 1–8 y 2–9). Analytics inicial: 41 invocaciones, 0 errores, mayor P99 de
+bucket 9,912 microsegundos=9.912 ms. CPU no es wall time ni P99 un máximo individual.
+No hubo 1102 ni exceso observado. Consulta final Analytics no disponible por rate
+limiter; se conserva el agregado inicial separado sin presentarlo como lectura final.
+No se forzó isolate nuevo por solicitud; carga/memoria/margen robusto y cuotas
+compartidas siguen pendientes. D1 leído tras primeros recorridos: 323,584 bytes,
+28,096 filas leídas/1,997 escritas en 24h de esta base, sin inferir cuota de cuenta.
+
+El primer script CRUD asumió la primera página de inventario y se detuvo después de
+15 respuestas correctas; se corrigió filtrando SKU y pasó 31/31 al repetir. Ese intento
+inicial, con CPU hasta 7 ms, queda privado y separado del conteo de aprobación.
+
+T111: README, cloud/README, quickstart y cloud/deploy/native-fetch-validation.md indican
+aptitud para los recorridos críticos de demostración. Correo permanece deshabilitado
+según prioridad autorizada: T102/R-EMAIL/T103, T075 integral, T104/T105/importación real,
+recuperación completa, Builds, producción/corte y revisiones manuales siguen pendientes.
+T034 conserva su aceptación integral pendiente por sus dependencias, sin ocultar que
+la publicación y los E2E de demostración de T109/T110 sí están verificados.
+
+T112 en curso: revisión Git sin secretos conocidos en 326 archivos y cuatro revisiones;
+falta completar commit/push y verificar remoto. No se marcan aún como realizados.
+Conteo antes de publicar: 75/112 completas, 37 pendientes. Ningún recurso antiguo,
+producción o plan pagado fue modificado. No se migraron datos reales.

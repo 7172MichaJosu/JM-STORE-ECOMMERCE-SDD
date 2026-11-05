@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../../http/router.js";
 import { fail } from "../../../../shared/domain/index.js";
 import { confirmFirebaseEmailChange } from "../../repositories/firebase-admin-security.js";
 import { cookieName, cookieOptions } from "../../security/sessions.js";

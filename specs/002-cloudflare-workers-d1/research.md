@@ -1,5 +1,17 @@
 # Research: Workers, D1 y conservación de JM-STORE
 
+## Decisión vigente 2026-11-05: Fetch nativo para la entrega
+
+Los intentos con el puente HTTP Node/Express excedieron 10 ms (15/19 ms en registro).
+La autorización del propietario permite cambiar primero Plan/Tasks y sustituir solo
+la entrada cloud. Se adopta Request/Response nativo con dispatcher mínimo, reutilizando
+handlers/repositorios y controles; no se añade framework ni dependencia de runtime.
+Express y SQLite permanecen en el servidor local. Las decisiones siguientes que
+describen el puente Node son históricas y quedan sustituidas para cloud por esta revisión.
+La adopción no acredita CPU por sí sola: se requieren pruebas y mediciones alojadas.
+Fuentes: [Fetch](https://developers.cloudflare.com/workers/runtime-apis/handlers/fetch/),
+[CPU Free](https://developers.cloudflare.com/workers/platform/limits/).
+
 Fecha: 2026-11-04. Evidencia: inspección del repositorio y documentación primaria.
 Revisión Firebase de Plan: decisiones de Clarify conservadas y contrastadas con fuentes
 oficiales. Esta revisión no consulta cuentas privadas ni modifica recursos.

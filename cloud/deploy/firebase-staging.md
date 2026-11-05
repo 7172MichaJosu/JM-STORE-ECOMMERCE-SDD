@@ -1,5 +1,11 @@
 # Firebase staging: estado vigente e historial
 
+Estado de entrega vigente: Fetch nativo, versión
+`76534b2c-9ab0-402b-8c77-617112fdbf8a`. La configuración Firebase no cambió durante este
+incremento. Password y acceso ADMIN verificados; correo deshabilitado. Las referencias
+de versión y bloqueos siguientes son checkpoints anteriores de configuración y CPU.
+[Evidencia vigente de demostración](native-fetch-validation.md).
+
 Checkpoint vigente: 2026-11-05, operaciones remotas de staging autorizadas. Se preservaron copias privadas antes de modificar configuración. Se confirmó proyecto exacto, facturación deshabilitada (Spark), Identity Platform deshabilitado, Email/Password, dominio autorizado, EEP, política 12–128 y API key restringida a Identity Toolkit/Token Service. El callback personalizado no quedó guardado: el API respondió EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED y el propietario indicó continuar con el predeterminado. La versión staging 08151cb7-7c41-40ad-8447-e679b02150de publica el cambio de correo bloqueado antes de cualquier efecto y permite password. La tabla siguiente conserva el checkpoint previo; esta nota y tasks.md son el estado vigente.
 
 | Configuración | Evidencia actual |

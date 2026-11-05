@@ -7,9 +7,9 @@ if (release.resourceGate?.blocked) throw Error("R-AUTH blocked: staging tests st
 const results = [];
 function client() {
   let cookie = "", csrf = "";
-  return { async request(label, method, path, body, expected) {
+  return { async request(label, method, path, body, expected, idempotencyKey) {
     const started = Date.now();
-    const response = await fetch(target.origin + "/api" + path, { method, headers: { origin: target.origin, cookie, "content-type": "application/json", "x-csrf-token": csrf }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const response = await fetch(target.origin + "/api" + path, { method, headers: { origin: target.origin, cookie, "content-type": "application/json", "x-csrf-token": csrf, ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const next = response.headers.getSetCookie().find(value => value.startsWith("__Host-jm-sdd.sid="));
     if (next) cookie = next.split(";")[0];
     const text = await response.text();
@@ -35,11 +35,93 @@ try {
   await c.request("wrong-password", "POST", "/auth/login", { email: customer.email, password: "T!" + randomUUID() + "a8" }, 401);
   await c.request("customer-login", "POST", "/auth/login", { email: customer.email, password: customer.password }, 200);
   const admin = JSON.parse(await readFile(new URL("../private/staging-synthetic-admin.json", import.meta.url), "utf8"));
+  if (!admin.synthetic || !/^jm-sdd-stage-[\da-f-]+@example\.test$/.test(admin.email)) throw Error("SYNTHETIC_ADMIN_REQUIRED");
   const a = client(); await a.request("admin-guest-session", "GET", "/auth/session", null, 200);
   const login = await a.request("admin-login", "POST", "/auth/login", { email: admin.email, password: admin.password }, 200);
   if (login.user?.role !== "ADMIN") throw Error("ADMIN_ROLE_MISMATCH");
   await a.request("admin-security", "GET", "/admin/me/security", null, 200);
   await a.request("admin-summary", "GET", "/admin/summary", null, 200);
+  if (process.argv.includes("--crud")) {
+    const assert = (condition, label) => { if (!condition) throw Error(label); };
+    const fixture = JSON.parse(await readFile(new URL("../private/staging-commerce-fixture.json", import.meta.url), "utf8"));
+    let product = await a.request("crud-read-owned-product", "GET", "/products/" + fixture.productSlug, null, 200);
+    assert(product.id === fixture.productId && product.sku.startsWith("CPU-"), "SYNTHETIC_PRODUCT_REQUIRED");
+    product = await a.request("crud-update-price", "PATCH", "/admin/products/" + product.id, { version: product.version, basePriceCents: 1200 }, 200);
+    product = await a.request("crud-update-image", "PUT", "/admin/products/" + product.id + "/images", { version: product.version, images: [{ path: product.images[0].path, alt: "Imagen sintetica verificada", position: 0 }] }, 200);
+    const inventory = await a.request("crud-inventory", "GET", "/admin/inventory?q=" + encodeURIComponent(product.sku), null, 200);
+    const stock = inventory.find(row => row.product_id === product.id);
+    await a.request("crud-stock-adjustment", "POST", "/admin/inventory/" + product.id + "/adjustments", { expectedVersion: stock.version, newQuantity: 4, reason: "Ajuste sintetico de verificacion" }, 201);
+    const movements = await a.request("crud-stock-history", "GET", "/admin/inventory/" + product.id + "/movements", null, 200);
+    assert(movements.some(row => row.kind === "ADJUSTMENT" && row.quantity_after === 4), "INVENTORY_HISTORY_MISMATCH");
+    const categories = await a.request("crud-read-category", "GET", "/admin/categories", null, 200);
+    const category = categories.find(row => row.id === fixture.categoryId);
+    assert(category?.slug.startsWith("cpu-"), "SYNTHETIC_CATEGORY_REQUIRED");
+    const categoryUpdated = await a.request("crud-update-category", "PATCH", "/admin/categories/" + category.id, { version: category.version, name: "CPU demo verificada" }, 200);
+    let promotion = await a.request("crud-create-promotion", "POST", "/admin/promotions", { productId: product.id, kind: "FINAL_PRICE", value: 900, startsAt: new Date(Date.now() - 60000).toISOString(), endsAt: new Date(Date.now() + 3600000).toISOString(), terms: "Promocion sintetica de demostracion", isActive: true }, 201);
+    promotion = await a.request("crud-update-promotion", "PATCH", "/admin/promotions/" + promotion.id, { version: promotion.version, value: 800 }, 200);
+    await a.request("crud-deactivate-promotion", "DELETE", "/admin/promotions/" + promotion.id, { version: promotion.version }, 204);
+    let customerRecord = await a.request("crud-read-own-customer", "GET", "/admin/customers/" + registered.user.id, null, 200);
+    customerRecord = await a.request("crud-update-own-customer", "PATCH", "/admin/customers/" + registered.user.id, { version: customerRecord.version, name: "Cliente sintetico verificado" }, 200);
+    await a.request("crud-reject-role-injection", "PATCH", "/admin/customers/" + registered.user.id, { version: customerRecord.version, role: "ADMIN" }, 422);
+    await a.request("crud-deactivate-own-customer", "PATCH", "/admin/customers/" + registered.user.id, { version: customerRecord.version, isActive: false }, 200);
+    await c.request("crud-customer-session-revoked", "GET", "/me", null, 401);
+    await a.request("crud-deactivate-product", "DELETE", "/admin/products/" + product.id, { version: product.version }, 204);
+    await c.request("crud-product-unpublished", "GET", "/products/" + fixture.productSlug, null, 404);
+    const order = await a.request("crud-preserve-order-snapshots", "GET", "/admin/orders/" + fixture.orderId, null, 200);
+    assert(order.total_cents === 2000 && order.payments.length === 2, "ORDER_SNAPSHOT_CHANGED");
+    await a.request("crud-deactivate-category", "DELETE", "/admin/categories/" + category.id, { version: categoryUpdated.version }, 204);
+  }
+  if (process.argv.includes("--commerce")) {
+    const assert = (condition, label) => { if (!condition) throw Error(label); };
+    const stamp = randomUUID().slice(0, 8);
+    const category = await a.request("create-synthetic-category", "POST", "/admin/categories", { name: "CPU synthetic " + stamp, slug: "cpu-" + stamp, isActive: true }, 201);
+    const library = await a.request("image-library", "GET", "/admin/image-library", null, 200);
+    const product = await a.request("create-synthetic-product", "POST", "/admin/products", { categoryId: category.id, sku: "CPU-" + stamp, slug: "cpu-test-" + stamp, name: "Producto sintetico CPU " + stamp, description: "Solo pruebas de staging. Pago simulado.", basePriceCents: 1000, isActive: true, isFeatured: false, initialStock: 5, images: [{ path: library[0].path, alt: "Imagen referencial sintetica", position: 0 }] }, 201);
+    const catalog = await c.request("catalog-search", "GET", "/products?q=" + encodeURIComponent(product.name), null, 200);
+    assert(catalog.some(row => row.id === product.id), "CATALOG_SEARCH_MISMATCH");
+    const address = await c.request("create-synthetic-address", "POST", "/me/addresses", { recipient: "Cliente sintetico", phone: "999111222", region: "Lima", province: "Lima", district: "Miraflores", street: "Avenida sintetica 123", reference: "Solo demostracion" }, 201);
+    let cart = await c.request("cart-empty", "GET", "/cart", null, 200);
+    cart = await c.request("cart-add-two", "PUT", "/cart/items/" + product.id, { quantity: 2, cartVersion: cart.version }, 200);
+    assert(cart.total_cents === 2000 && cart.currency === "PEN", "CART_TOTAL_MISMATCH");
+    const quote = await c.request("checkout-quote", "POST", "/checkout/quote", { addressId: address.id, cartVersion: cart.version }, 200);
+    const rejected = await c.request("payment-rejected", "POST", "/orders", { quoteToken: quote.quoteToken, simulationOutcome: "REJECTED" }, 201, randomUUID());
+    assert(rejected.paymentStatus === "REJECTED" && rejected.total_cents === 2000, "REJECTION_MISMATCH");
+    let current = await c.request("stock-after-rejection", "GET", "/products/" + product.slug, null, 200);
+    assert(current.quantity === 5, "REJECTION_CHANGED_STOCK");
+    const retry = await c.request("payment-retry-quote", "POST", "/orders/" + rejected.publicId + "/payment-quote", {}, 200);
+    const key = randomUUID(), body = { quoteToken: retry.quoteToken, simulationOutcome: "APPROVED" };
+    const approved = await c.request("payment-approved", "POST", "/orders/" + rejected.publicId + "/simulated-payments", body, 201, key);
+    assert(approved.paymentStatus === "APPROVED" && approved.status === "CONFIRMED", "APPROVAL_MISMATCH");
+    const replay = await c.request("payment-idempotent-replay", "POST", "/orders/" + rejected.publicId + "/simulated-payments", body, 201, key);
+    assert(replay.publicId === approved.publicId && replay.payments.length === 2, "PAYMENT_REPLAY_DUPLICATED");
+    current = await c.request("stock-after-approval", "GET", "/products/" + product.slug, null, 200);
+    assert(current.quantity === 3, "APPROVAL_STOCK_MISMATCH");
+    const orders = await c.request("customer-order-history", "GET", "/orders", null, 200);
+    assert(orders.some(row => row.publicId === approved.publicId), "ORDER_HISTORY_MISMATCH");
+    const preparing = await a.request("admin-order-preparing", "PATCH", "/admin/orders/" + approved.publicId + "/status", { expectedVersion: approved.version, status: "PREPARING" }, 200);
+    assert(preparing.status === "PREPARING", "ORDER_STATUS_MISMATCH");
+    const tracked = await c.request("customer-order-tracking", "GET", "/orders/" + approved.publicId, null, 200);
+    assert(tracked.status === "PREPARING", "CUSTOMER_TRACKING_MISMATCH");
+    await c.request("customer-cannot-admin", "GET", "/admin/summary", null, 403);
+    const account = await a.request("synthetic-admin-security", "GET", "/admin/me/security", null, 200);
+    await a.request("combined-credentials-rejected", "PATCH", "/admin/me/security", { version: account.version, currentPassword: admin.password, email: "unused-" + stamp + "@example.test", newPassword: "T!" + randomUUID() + "a8", confirmNewPassword: "different" }, 422);
+    await a.request("wrong-current-password", "PATCH", "/admin/me/security", { version: account.version, currentPassword: "T!" + randomUUID() + "a8", newPassword: "T!" + stamp.repeat(3) + "a8", confirmNewPassword: "T!" + stamp.repeat(3) + "a8" }, 403);
+    const other = client(); await other.request("second-admin-session", "GET", "/auth/session", null, 200);
+    await other.request("second-admin-login", "POST", "/auth/login", { email: admin.email, password: admin.password }, 200);
+    const nextPassword = "T!" + randomBytes(24).toString("base64url") + "a8";
+    const manifest = new URL("../private/staging-synthetic-admin.json", import.meta.url);
+    await writeFile(manifest, JSON.stringify({ ...admin, pendingPassword: nextPassword }), { mode: 0o600 });
+    const changed = await a.request("synthetic-admin-password-change", "PATCH", "/admin/me/security", { version: account.version, currentPassword: admin.password, newPassword: nextPassword, confirmNewPassword: nextPassword }, 200);
+    assert(changed.requiresLogin === true, "PASSWORD_LOGIN_REQUIRED");
+    await writeFile(manifest, JSON.stringify({ ...admin, password: nextPassword }), { mode: 0o600 });
+    const invalidated = await other.request("other-admin-session-revoked", "GET", "/auth/session", null, 200);
+    assert(invalidated.user === null, "PASSWORD_SESSION_NOT_REVOKED");
+    await a.request("new-admin-guest-session", "GET", "/auth/session", null, 200);
+    await a.request("old-admin-password-rejected", "POST", "/auth/login", { email: admin.email, password: admin.password }, 401);
+    await a.request("new-admin-password-login", "POST", "/auth/login", { email: admin.email, password: nextPassword }, 200);
+    await a.request("new-admin-access", "GET", "/admin/summary", null, 200);
+    await writeFile(new URL("../private/staging-commerce-fixture.json", import.meta.url), JSON.stringify({ productId: product.id, productSlug: product.slug, categoryId: category.id, orderId: approved.publicId }), { mode: 0o600 });
+  }
   await writeFile(new URL("../private/staging-smoke-results.json", import.meta.url), JSON.stringify({ results, passed: true, finishedAt: new Date().toISOString() }), { mode: 0o600 });
   console.log(JSON.stringify({ passed: true, checks: results, cpuNotWallTime: true, syntheticOnly: true, credentialsPrinted: false }, null, 2));
 } catch (error) {

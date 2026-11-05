@@ -8,8 +8,9 @@ El identificador de feature es lógico; la rama Git inspeccionada sigue siendo `
 
 ## Summary
 
-Distribuir React/Vite mediante Workers Static Assets y atender `/api/*` con Express 5
-usando el adaptador oficial `cloudflare:node/httpServerHandler`. Añadir un paquete cloud
+Distribuir React/Vite mediante Workers Static Assets y atender `/api/*` con Fetch nativo
+y un dispatcher pequeño de rutas/middleware propio del paquete cloud. Retirar el puente
+`cloudflare:node/httpServerHandler` del bundle remoto. Añadir un paquete cloud
 con entrada y persistencia D1 propias, manteniendo operable el modo Node/Express/SQLite.
 Conservar módulos, reglas, imágenes, colores, temas y recorrido de compra existentes.
 
@@ -48,14 +49,50 @@ tareas y pruebas. Esta revisión no cambia tasks.md ni acredita funcionalidad nu
 
 ## Technical Context
 
+**Revisión autorizada 2026-11-05, entrega 2026-11-06 08:00 America/Lima**: los intentos
+con Express/HTTP Node consumieron 15/19 ms de CPU en registro. Se adopta Fetch nativo
+solo en cloud, conservando handlers, contratos JSON, repositorios D1 y controles de
+seguridad. El servidor Express/SQLite local permanece independiente. Los checkpoints
+anteriores de este documento son históricos cuando describen el adaptador HTTP.
+
+El dispatcher cloud compila las rutas una vez; admite únicamente el subconjunto usado
+por los módulos existentes: métodos HTTP, parámetros y montaje de middleware por
+segmentos completos. Los objetos de contexto y respuesta conectan esos handlers con
+Request/Response, sin sockets ni emulación de servidor Node. Debe esperar todos los
+middleware async y propagar fallos al error handler uniforme. Cookies HttpOnly/Secure,
+SameSite=Lax, CSRF/Origin, autorización D1, lookup/revocación Firebase y límites de
+intentos se mantienen. El parser JSON impone 100 KiB por streaming, rechaza JSON
+malformado con 400, tipo de cuerpo no soportado con 415 y tamaño excesivo con 413;
+queries repetidas permanecen arrays para no eludir validaciones. HEAD conserva headers
+y omite body. Cabeceras de seguridad equivalentes a las actuales.
+
+No se añaden dependencias de runtime. Web Crypto y las utilidades Node crypto existentes
+siguen disponibles con nodejs_compat; no se debilitan firmas, claves ni revocación.
+No cambia esquema D1, namespace ni identidad/rol del administrador personal.
+
+Pruebas previas: contratos de dispatcher/parser y regresión Worker completa; luego E2E
+Firebase y local. Tras respaldo nuevo verificado, publicar solo staging con secretos
+actuales; medir CPU de registro/login, compras simuladas y administración con identidades
+sintéticas, incluyendo password y revocación sobre ADMIN sintético. Conservar evidencia
+de cola real y Analytics, diferenciando CPU de wall time y ausencia de métricas.
+El nuevo permiso autoriza repetir la medición pese al gate histórico fallido, sin
+eliminarlo hasta contar con evidencia. No reaprovisionar al administrador personal.
+El cambio de correo queda deshabilitado y pendiente según autorización de entrega;
+esto no acredita FR-011/R-EMAIL. Migración real y producción continúan bloqueadas.
+Las regresiones locales T074/T108 son independientes de R-EMAIL y pueden concluir para
+esta entrega; su aprobación no equivale a aprobar el corte ni toda Phase 8.
+
+Fuentes técnicas revisadas: [Fetch](https://developers.cloudflare.com/workers/runtime-apis/handlers/fetch/)
+y [límites Free](https://developers.cloudflare.com/workers/platform/limits/).
+
 **Language/Version**: JavaScript ESM; Node 24.15+ de rama 24 y npm 11 en herramientas;
 workerd en Cloudflare, compatibility date propuesta `2026-11-04`.
 
-**Primary Dependencies**: React 19, Vite 7, React Router 7, Express 5 y Helmet existentes;
-adaptador oficial HTTP; Wrangler 4.157.0 fijado por lockfile existente; Vitest y la integración
-oficial Workers para pruebas D1. Sin ORM ni nuevo framework HTTP.
-Auth REST usa fetch; biblioteca JWT propuesta jose ESM/Web Crypto, fijada en lockfile
-solo durante Implement. Admin SDK se limita a herramientas Node privadas de importación,
+**Primary Dependencies**: React 19, Vite 7, React Router 7; Fetch/Web Crypto nativos en cloud;
+Wrangler 4.157.0 fijado por lockfile; Vitest y la integración oficial Workers para pruebas D1.
+Express y Helmet permanecen en el servidor local, sin entrar al bundle cloud.
+Auth REST usa fetch y el verificador nativo Web Crypto. Sin ORM ni nuevo framework HTTP.
+Admin SDK se limita a herramientas Node privadas de importación,
 no al Worker. No añadir SDK Firebase al cliente en el diseño de backend REST/cookie.
 
 **Storage**: SQLite local actual; D1 nueva por binding `DB`; imágenes y manifiesto público
@@ -85,7 +122,8 @@ del proyecto antiguo cuenta para las cuotas compartidas. Fuentes en [research.md
 **Scale/Scope**: preservar carrito de 100 líneas con cantidades1..99, datos migrados sin
 limitar a los 20 productos demo; no pagos reales, sincronización continua o carga arbitraria de imágenes. Firebase base
 Spark es la única integración de identidad aprobada. No Identity Platform, Blaze ni otros
-servicios de pago. No cambiar planes automáticamente; no hay proyecto Firebase creado.
+servicios de pago. No cambiar planes automáticamente; se utiliza el proyecto Firebase
+Spark creado por el propietario, sin crear otro ni modificar la cuenta personal.
 
 ## Constitution Check
 
@@ -146,7 +184,8 @@ cloud/
   wrangler.local.jsonc         # emulación local sin IDs remotos
   src/
     worker.js                  # routing Assets/API y adaptador HTTP
-    app.js                     # fábrica Express sin fs ni node:sqlite
+    app.js                     # fábrica Fetch sin sockets, fs ni node:sqlite
+    http/router.js             # dispatcher nativo y respuesta/cookies
     config.js                  # bindings y configuración por request
     repositories/              # D1 asíncrono y batch commands
     modules/                   # catálogo/auth/cliente/carrito/checkout/pedidos/admin
@@ -165,18 +204,18 @@ la API síncrona de SQLite mediante promesas D1.
 
 ## Architecture and Delivery Design
 
-### Frontend y adaptación Express
+### Frontend y entrada Fetch nativa
 
 Usar el build Vite actual como Static Assets con fallback SPA. Enviar `/api` y `/api/*`
-al Worker antes del fallback; API desconocida siempre JSON404. Express usa
-`httpServerHandler`; su puerto interno es una clave del adaptador, no un servidor local
-necesario en producción. Configuración y bindings por request, sin estado mutable de
+al Worker antes del fallback; API desconocida siempre JSON404. El Worker atiende
+Request/Response directamente, sin puerto interno ni adaptador HTTP Node.
+Configuración y bindings por request, sin estado mutable de
 usuario compartido entre invocaciones.
 
 Sustituir acceso SQL síncrono por repositorios async. Conservar middleware de validación,
 formatos de errores y rutas. No usar express.static/sendFile, filesystem, migración al
 arranque o lectura runtime de imágenes. Importar manifiesto público al compilar. Aplicar
-CSP/HSTS y cabeceras de seguridad también a assets, que no atraviesan Helmet; caché por
+CSP/HSTS y cabeceras de seguridad equivalentes también a assets; caché por
 hash para estáticos y `no-store` para API privada/sesión/seguridad.
 
 La respuesta cloud de `/auth/session` añade `capabilities.adminSecurity=true`. El cliente
@@ -375,4 +414,4 @@ No se reescriben tareas históricas ni se marcan nuevas tareas como completadas 
 
 Sin violaciones de Constitution que justificar. El paquete cloud responde al aislamiento
 solicitado. Guardas y SQL por conjuntos son necesarios para atomicidad D1 y carritos de
-100 líneas. Se conservan Express y Vite y se evita añadir ORM u otro framework HTTP.
+100 líneas. Se conserva Vite y Express local; cloud usa Fetch sin ORM u otro framework HTTP.

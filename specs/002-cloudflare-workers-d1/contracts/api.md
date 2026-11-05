@@ -1,5 +1,13 @@
 # Contrato HTTP cloud
 
+Actualización de transporte 2026-11-05: `/api` usa Request/Response Fetch nativos,
+conservando rutas, JSON, cookies, roles, CSRF/Origin e idempotencia. Parser de cuerpo
+limitado a 100 KiB incluso sin Content-Length: 400 INVALID_JSON para JSON inválido,
+413 BODY_TOO_LARGE al exceder el límite y 415 UNSUPPORTED_MEDIA_TYPE para cuerpos no
+JSON o Content-Encoding no admitido. HEAD aplica los controles de GET y omite el cuerpo.
+Query keys repetidas se validan como arrays, sin descartar valores silenciosamente.
+El resto de contratos y la separación Firebase identidad/D1 autorización no cambian.
+
 Diseño2026-11-04; base `/api`, JSON UTF8, mismo origen que el cliente. Extiende
 [contrato001](../../001-jm-store-ecommerce/contracts/api.md); no cambia nombres de campos,
 formatos de pedido/carrito/producto, códigos ni semántica actuales al adaptar persistencia.

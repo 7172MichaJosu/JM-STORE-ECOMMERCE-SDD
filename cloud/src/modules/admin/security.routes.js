@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../../http/router.js";
 import { changeSecurity } from "../../repositories/admin-security.js";
 import { adminOnly, cookieName, cookieOptions } from "../../security/sessions.js";
 import { limit } from "../../security/rate-limit.js";

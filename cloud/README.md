@@ -1,5 +1,17 @@
 # JM-STORE cloud
 
+## Estado vigente: Fetch nativo, 5 de noviembre de 2026
+
+Staging: https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev
+
+Versión `76534b2c-9ab0-402b-8c77-617112fdbf8a`; recorridos críticos verificados para
+demostración: 134 pruebas locales, 71 comprobaciones API y 3 E2E navegador aprobadas.
+146 invocaciones de tail con máximo 9 ms; Analytics inicial P99 de bucket 9.912 ms.
+Se preservaron ADMIN personal, namespace, secretos, cuentas originales y SQLite local.
+Correo sigue deshabilitado; carga/memoria, migración real y producción están pendientes.
+[Evidencia actual](deploy/native-fetch-validation.md). Los checkpoints Express/scrypt
+y fallos de CPU siguientes son históricos; esta sección describe el estado vigente.
+
 Workspace independiente; `npm start` conserva Node/Express/SQLite. Se provisionaron los
 recursos nuevos de staging, documentados en `cloud/deploy/staging-resources.md`. Su
 configuración de staging usa `workers_dev=true`, sin routes y `REMOTE_ENABLED=true` solo

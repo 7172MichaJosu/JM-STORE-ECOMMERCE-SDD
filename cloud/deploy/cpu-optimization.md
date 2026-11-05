@@ -1,5 +1,10 @@
 # Optimización autorizada y resultado de CPU — 2026-11-05
 
+**Checkpoint histórico de Express/HTTP Node.** El incremento posterior Fetch nativo
+publicado cumple CPU en los recorridos medidos de demostración; véase
+[validación vigente](native-fetch-validation.md). La aceptación integral de carga/memoria
+y el cambio de correo permanecen pendientes.
+
 El propietario autorizó optimización automática y repetición de pruebas únicamente en
 staging, manteniendo Workers Free y Firebase Spark. No autorizó producción, pagos,
 migración real, modificación de SQLite/Worker antiguo ni commit/push.

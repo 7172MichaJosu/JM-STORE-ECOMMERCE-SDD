@@ -1,9 +1,5 @@
-import { env } from "cloudflare:workers";
-import { httpServerHandler } from "cloudflare:node";
 import { createApp } from "./app.js";
-const app = createApp(() => env);
-app.listen(3000);
-const http = httpServerHandler({ port: 3000 });
+const app = createApp();
 export function secured(response, url) {
   const headers = new Headers(response.headers);
   headers.set(
@@ -47,7 +43,7 @@ export default {
       );
     const response =
       url.pathname === "/api" || url.pathname.startsWith("/api/")
-        ? await http.fetch(request, bindings, ctx)
+        ? await app.fetch(request, bindings, ctx)
         : await bindings.ASSETS.fetch(request);
     return secured(response, url);
   },

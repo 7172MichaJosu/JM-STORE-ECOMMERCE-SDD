@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../../http/router.js";
 import { fields, text, fail } from "../../../../shared/domain/index.js";
 import {
   hashPassword,

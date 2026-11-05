@@ -1,11 +1,16 @@
 # Recursos de staging de JM-STORE
 
+Estado vigente tras Fetch nativo: versión `76534b2c-9ab0-402b-8c77-617112fdbf8a`,
+recorridos críticos de demostración aprobados. [Evidencia actual](native-fetch-validation.md).
+Los checkpoints anteriores de CPU que aparecen más abajo son históricos; las pruebas
+de carga/memoria completas y el cambio de correo siguen pendientes.
+
 Provisionados el 2026-11-04 con autorización explícita. Son independientes del
 proyecto Cloudflare anterior y usan el plan gratuito.
 
 | Recurso | Identidad | Estado |
 |---|---|---|
-| Worker | `jm-store-ecommerce-sdd-staging` | Desplegado en `https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev`; versión vigente `c0f43974-41a7-4c15-9ddb-231b76763c81` |
+| Worker | `jm-store-ecommerce-sdd-staging` | Desplegado en `https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev`; versión vigente `76534b2c-9ab0-402b-8c77-617112fdbf8a` |
 | D1 | `jm-store-ecommerce-d1-staging` | UUID `ce073401-aae5-4889-8d32-047010650987`; región `ENAM`; migraciones 0001–0004 aplicadas; baseline preservado de 5 categorías y 20 productos; identidades Firebase sintéticas de pruebas, total posterior sin recontar tras detener ensayos |
 
 La configuración Worker→D1 usa el binding `DB`. `workers_dev=true`, `routes=[]` y

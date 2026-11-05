@@ -6,7 +6,10 @@ const target = await checkTarget(["--target", "staging"]);
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const child = spawn(process.execPath, [root + "node_modules/wrangler/bin/wrangler.js", "tail", "--format", "json", "--config", root + "cloud/wrangler.staging.jsonc"], { cwd: root, env: { ...process.env, WRANGLER_SEND_METRICS: "false" }, stdio: ["ignore", "pipe", "pipe"] });
 const observations = []; let buffer = "", ran = false, exceeded = false;
-const smoke = process.argv.includes("--smoke");
+const hosted = process.argv.includes("--hosted");
+const commerce = process.argv.includes("--commerce");
+const crud = process.argv.includes("--crud");
+const smoke = process.argv.includes("--smoke") || commerce || hosted || crud;
 let finishRun;
 const completed = new Promise(resolve => { finishRun = resolve; });
 let smokeExitCode = null;
@@ -40,7 +43,7 @@ const fallback = setTimeout(() => { if (!ran && child.exitCode === null) { ran =
 async function run() {
   await new Promise(resolve => setTimeout(resolve, 1200));
   if (smoke) {
-    const probe = spawn(process.execPath, [root + "cloud/scripts/staging-smoke.js"], { cwd: root, stdio: "inherit" });
+    const probe = spawn(process.execPath, hosted ? [root + "cloud/scripts/hosted-e2e.js", "--target", "staging"] : [root + "cloud/scripts/staging-smoke.js", ...(commerce ? ["--commerce"] : crud ? ["--crud"] : [])], { cwd: root, stdio: "inherit" });
     smokeExitCode = await new Promise(resolve => probe.on("exit", resolve));
     await new Promise(resolve => setTimeout(resolve, 5000));
     return;
@@ -55,12 +58,17 @@ async function run() {
 }
 if (smoke) {
   let timeout;
-  await Promise.race([completed, new Promise(resolve => { timeout = setTimeout(resolve, 120_000); })]);
+  await Promise.race([completed, new Promise(resolve => { timeout = setTimeout(resolve, 300_000); })]);
   clearTimeout(timeout);
 } else await new Promise(resolve => setTimeout(resolve, 20_000));
 clearTimeout(fallback);
 child.kill("SIGINT");
-await writeFile(new URL("../private/staging-tail-cpu.json", import.meta.url), JSON.stringify({ collectedAt: new Date().toISOString(), observations, exceeded, unknownKeys, smokeExitCode }), { mode: 0o600 });
-console.log(JSON.stringify({ observations, exceededFreeCpu: exceeded, metricsPresent: observations.length > 0, nonSensitiveEventFieldNames: unknownKeys, probeAttempted: ran, smokeExitCode, childExitCode: child.exitCode, noRawEventsPrinted: true }, null, 2));
+const byPath = Object.values(observations.reduce((groups, row) => {
+  const group = groups[row.path] ||= { path: row.path, requests: 0, minCpuMs: Infinity, maxCpuMs: 0 };
+  group.requests++; group.minCpuMs = Math.min(group.minCpuMs, row.cpuMs); group.maxCpuMs = Math.max(group.maxCpuMs, row.cpuMs); return groups;
+}, {}));
+const report = { collectedAt: new Date().toISOString(), mode: hosted ? "hosted" : commerce ? "commerce" : crud ? "crud" : smoke ? "smoke" : "probe", observations, exceeded, unknownKeys, smokeExitCode };
+await writeFile(new URL("../private/staging-tail-cpu.json", import.meta.url), JSON.stringify(report), { mode: 0o600 });
+console.log(JSON.stringify({ byPath, measuredRequests: observations.length, maxCpuMs: Math.max(0, ...observations.map(row => row.cpuMs)), exceededFreeCpu: exceeded, metricsPresent: observations.length > 0, nonSensitiveEventFieldNames: unknownKeys, probeAttempted: ran, smokeExitCode, childExitCode: child.exitCode, noRawEventsPrinted: true }, null, 2));
 if (exceeded) process.exitCode = 2;
 else if (smoke && (smokeExitCode !== 0 || observations.length < 11)) process.exitCode = 1;

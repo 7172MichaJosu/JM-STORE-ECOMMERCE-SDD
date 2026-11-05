@@ -7,10 +7,6 @@
     "dev": "wrangler dev --local --config wrangler.local.jsonc --persist-to .wrangler/local",
     "test": "vitest run --config vitest.config.js"
   },
-  "dependencies": {
-    "express": "5.1.0",
-    "helmet": "8.1.0"
-  },
   "devDependencies": {
     "wrangler": "4.157.0",
     "vitest": "4.1.12",

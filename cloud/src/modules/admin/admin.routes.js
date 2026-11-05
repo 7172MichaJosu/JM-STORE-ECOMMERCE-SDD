@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from "../../http/router.js";
 import { adminOnly } from "../../security/sessions.js";
 import { page, id } from "../../repositories/admin-common.js";
 import * as products from "../../repositories/admin-products.js";

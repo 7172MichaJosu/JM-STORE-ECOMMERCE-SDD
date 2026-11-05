@@ -1,5 +1,18 @@
 # Quickstart de validación: despliegue independiente JM-STORE
 
+## Estado de entrega vigente — Fetch nativo, 2026-11-05
+
+Demostración verificada en el [staging publicado](https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev).
+Versión `76534b2c-9ab0-402b-8c77-617112fdbf8a`. Plan/Tasks se actualizaron antes de
+retirar el puente HTTP Node solo de cloud. ADMIN personal y datos originales conservados.
+
+134 pruebas locales, 71 comprobaciones API alojadas y 3 E2E navegador aprobadas.
+Tail: 146 invocaciones, máximo 9 ms; Analytics inicial: P99 de bucket 9.912 ms.
+Funciona el recorrido cliente–pedido–administración y password separado con revocación.
+Correo continúa deshabilitado; carga/memoria, migración y producción siguen pendientes.
+[Detalle, respaldo y límites de aceptación](../../cloud/deploy/native-fetch-validation.md).
+Las notas anteriores de Express/scrypt y bloqueos son checkpoints históricos.
+
 **Estado**: implementación parcial (2026-11-04). T001–T033 y T048–T056 completadas. T034 sigue
 pendiente por R-AUTH: la suite alojada pasó 3/3, pero el scrypt de registro/login midió
 máximos de CPU de 602/522 ms y promedios de 451.75/435 ms, por encima de los 10 ms de
