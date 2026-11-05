@@ -249,7 +249,7 @@ para la entrega del 6 de noviembre a las 08:00 America/Lima. No se reconfigura A
 - [X] T109 [US1] Respaldar y restaurar/verificar staging; publicar Fetch solo al Worker nuevo preservando secretos, namespace, ADMIN y datos; medir primera invocación de registro tras publicación y recorridos calientes reales con cuentas sintéticas; documentar límites de la muestra sin equipararla a estrés integral.
 - [X] T110 [US1] Completar pruebas alojadas cliente y administración: búsqueda/carrito/direcciones, pago rechazado y aprobado, stock/idempotencia, CRUD/seguimiento y cambio separado de password con revocación sobre ADMIN sintético; respetar Free/Spark y no usar la cuenta personal.
 - [X] T111 Documentar evidencia actual, aptitud de demostración y pendientes explícitos (correo, migración real, producción, pruebas manuales no realizadas) en `cloud/deploy/`, README y quickstart; actualizar solo tareas verificadas.
-- [ ] T112 Revisar todo el contenido Git publicable y el historial por secretos/datos privados; commit/push autorizado a `JM-STORE-ECOMMERCE-SDD` cuando pasen las pruebas críticas; verificar remoto y árbol limpio, sin deploy de producción.
+- [X] T112 Revisar todo el contenido Git publicable y el historial por secretos/datos privados; commit/push autorizado a `JM-STORE-ECOMMERCE-SDD` cuando pasen las pruebas críticas; verificar remoto y árbol limpio, sin deploy de producción.
 
 **Purpose**: demostrar restauración y cuotas, conectar Workers Builds y abrir solo después
 de completar stories y gates. El target remoto siempre es explícito.
@@ -538,3 +538,15 @@ T112 en curso: revisión Git sin secretos conocidos en 326 archivos y cuatro rev
 falta completar commit/push y verificar remoto. No se marcan aún como realizados.
 Conteo antes de publicar: 75/112 completas, 37 pendientes. Ningún recurso antiguo,
 producción o plan pagado fue modificado. No se migraron datos reales.
+
+**Cierre T112**: commit de implementación `6e519d4` publicado en main del repositorio
+`7172MichaJosu/JM-STORE-ECOMMERCE-SDD`. Se confirmó el mismo hash mediante ls-remote.
+Revisión de 30 archivos preparados (390,260 bytes): sin patrones de credenciales,
+bases de datos, archivos privados ni UID personal. El escaneo adicional de valores
+secretos conocidos no encontró coincidencias en 326 archivos o el historial revisado.
+`.env.local`, `.dev.vars`, SQLite, backups y cloud/private permanecen ignorados y fuera
+del commit. Árbol limpio verificado tras ese push; esta anotación registra el resultado
+después de realizado, sin marcar publicación anticipadamente.
+
+Conteo final del incremento: **76/112 tareas completas, 36 pendientes**. T106–T112 y
+T074 terminadas; la feature integral no se declara completa. [Demostración y evidencia](../../cloud/deploy/native-fetch-validation.md).
