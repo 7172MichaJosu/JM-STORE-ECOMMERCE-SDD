@@ -3,7 +3,9 @@
 Diseño futuro, 2026-11-04. Basado en las cinco migraciones SQLite existentes y
 [modelo de feature001](../001-jm-store-ecommerce/data-model.md). No se ejecutan DDL ni
 conversiones en Plan. Todas las ampliaciones siguientes son del esquema cloud; SQLite
-local conserva sus datos y compatibilidad.
+local conserva sus datos y compatibilidad. Firebase es autoridad de credenciales online;
+D1 conserva IDs comerciales, roles, perfiles y sesiones. Diseño reconciliado con Clarify;
+[protocolo Firebase](contracts/firebase-auth.md). No ejecutar DDL desde este Plan.
 
 ## Tipos, identidad y validación
 
@@ -57,8 +59,15 @@ No crear índices excesivos: su mantenimiento también consume filas escritas.
 
 | Tabla/campo | Diseño y restricciones |
 |---|---|
-| users.auth_version | INTEGER NOT NULL DEFAULT0,>=0; cambia al actualizar password/desactivar acceso |
-| sessions.auth_version | INTEGER nullable; versión comprobada al crear sesión de usuario |
+| users.auth_version | INTEGER NOT NULL DEFAULT0,>=0; cambia al revocar acceso o iniciar cambio de password; monotónica |
+| users.firebase_auth_not_before | Epoch seconds,>=0; nuevo login exige auth_time posterior al corte de revocación |
+| users.security_state | ACTIVE o LOCKED; LOCKED deniega acceso comercial, permite solo conciliación privada tras nueva autenticación válida |
+| external_identities | user_id FK UNIQUE,provider=firebase,project_id,firebase_uid,status,source_run_id nullable,version,created_at,updated_at; UNIQUE(project_id,firebase_uid) |
+| identity_email_reservations | normalized_email PK UNIQUE,purpose ACCOUNT/IMPORTED/REGISTRATION/EMAIL_CHANGE,user_id FK nullable,operation_id UNIQUE nullable,source_run_id nullable,expires_at nullable,version; registro común de propiedad/reservas, nunca vínculo por email |
+| registration_operations | UUID PK,normalized_email,expected_firebase_uid nullable,status PREPARED/PROVIDER_ACCEPTED/COMPLETED/RECONCILIATION_REQUIRED,created_at,updated_at; sin passwords/tokens, reserva previa a signup y prueba de UID propio antes de completar perfil |
+| session_token_envelopes | session_id PK/FK ON DELETE CASCADE,project_id,firebase_uid,key_version,nonce,ciphertext,token_expires_at,auth_time,version; ID/refresh tokens solo dentro de sobre AES-GCM |
+| credential_operations | UUID PK,user_id FK,kind EMAIL/PASSWORD,expected_user_version,expected_auth_version,expected_uid,old_email,target_email nullable,status,expires_at nullable,provider_result,revocation_cutoff,request_id,created_at,updated_at; sin passwords, OOB, tokens ni hashes nuevos; correos privados solo para reconciliar |
+| sessions.auth_version | INTEGER nullable; versión comprobada al crear/renovar sesión y dentro de guardas de mutación |
 | sessions.namespace | TEXT NOT NULL; fuente copiada=`imported-source`, nuevas sesiones=identificador del nuevo entorno |
 | security_events | UUID PK,user_id FK,event_type,changed_email boolean,changed_password boolean,request_id,created_at; sin email/password/hash/IP/cuerpos |
 | rate_limit_buckets | bucket_key HMAC,window_start,expires_at,count>=0; PK(bucket_key,window_start), índice expiración |
@@ -75,6 +84,46 @@ Invitados iniciarán nuevo carrito; carritos de clientes se recuperan por user_i
 La expiración/limpieza normal de registros transitorios se ejecuta después de verificar
 la importación, no durante la reconciliación.
 
+external_identities.status: RESERVED (UID previsto y email reservado), IMPORTED (Firebase
+importado sin abrir acceso), ACTIVE (vínculo verificado), LOCKED (conflicto o conciliación).
+El UID se asigna mediante manifiesto/provisión privada, estable y distinto entre entornos;
+no deriva del email. Cambiar email no cambia user_id, UID, roles, FK ni historial.
+Registro público solo crea CUSTOMER después de verificar un UID nuevo no reservado.
+
+Conservar password_hash original de cuentas importadas para equivalencia histórica y
+backups protegidos; nunca autentica online. Nuevos usuarios Firebase llevan marcador
+explícito no autenticable external:firebase para satisfacer NOT NULL del baseline.
+Ningún fallback cloud puede llamar al verificador SQLite o tratar ese marcador como hash.
+El hash vigente de Firebase no se replica en D1 y el hash histórico no se actualiza tras
+cambiar contraseña online. La SQLite original conserva sus propias credenciales intactas.
+
+session_token_envelopes solo existe para sesiones Firebase activas. AES-256-GCM usa nonce
+96 bits único por cifrado, clave fuera de DB y AAD entorno/proyecto/UID/sesión/key_version.
+CAS sobre sesión y sobre cifrado al renovar; no revivir fila eliminada durante logout.
+Nunca devolver sobres al cliente ni guardar ID/refresh tokens en claro. Rotación de clave
+retiene claves antiguas protegidas hasta reenvolver o expirar; si no se pueden descifrar,
+revocar y pedir login. Backup D1 no incluye la clave y no basta para activar tokens.
+
+credential_operations es persistente y no se confunde con mutation_contexts: conserva
+solo estados/resultados seguros para reconciliar Firebase y D1 tras caída. Por usuario,
+máximo una operación activa (PASSWORD o EMAIL), con índice parcial para estados no
+terminales. EMAIL contiene correo antiguo/propuesto y expires_at=created_at+60min;
+PASSWORD no guarda credenciales ni target_email. Envío combinado se rechaza antes de mutar.
+
+identity_email_reservations es el único espacio de direcciones para usuarios actuales,
+cuentas importadas, registros y cambios pendientes. Poblar propiedad ACCOUNT/IMPORTED
+antes de abrir registro. Cada write de users.email y su claim se confirma en el mismo
+batch con guardas; no basta consultar tres tablas desde JavaScript antes de insertar.
+Al pedir EMAIL se conserva claim ACCOUNT antiguo y se adquiere EMAIL_CHANGE destino.
+Al confirmar, batch actualiza email y convierte destino en ACCOUNT, libera anterior y
+termina operación/auditoría sin recrear sesiones. Cancelar/expirar CAS solo libera claim
+temporal del dueño correcto; nunca claims ACCOUNT/IMPORTED ni estados APPLYING/inciertos.
+Las reservas activas se rechazan genéricamente antes de signup/OOB. Comprobar en SQL
+propiedad/versión/expiry al competir registro/confirmación/cancelación/limpieza.
+El índice UNIQUE protege JM-STORE, no direcciones globales en Firebase. Un UID externo
+no enlazado no completa perfil por email. Desfase remoto requiere bloqueo/reconciliación.
+Los correos de operaciones son datos personales privados: sin retorno público ni logs.
+
 `mutation_contexts` no es API pública ni cola: solo conserva datos durante una transacción.
 Al finalizar el batch se elimina su fila. No quedan passwords/hash de verificación en
 el payload ni se registra SQL con parámetros. Las respuestas idempotentes son privadas.
@@ -86,8 +135,12 @@ el payload ni se registra SQL con parámetros. Las respuestas idempotentes son p
 | Order | AWAITING_PAYMENT→CONFIRMED al aprobar reintento; CONFIRMED→PREPARING→SHIPPED→DELIVERED por admin |
 | Payment | intento inmutable REJECTED o APPROVED; máximo un APPROVED/pedido |
 | Inventory | rechazo no modifica; aprobación descuenta una vez y genera SALE; ajuste genera ADJUSTMENT |
-| Admin email | currentPassword válido+email único+CAS: cambio inmediato; sin email de confirmación |
-| Admin password | currentPassword válido+password válido+CAS: actualizar hash, incrementar auth_version, revocar todas las sesiones y auditar |
+| Admin email | reautenticar; PENDING_VERIFICATION y reserva, email antiguo vigente; confirmar OOB→APPLYING+LOCKED+revocación→COMPLETED y email nuevo; exigir login |
+| Admin password | reautenticar Firebase mismo UID, PREPARED+LOCKED+revocación D1; cambio remoto; reconciliar y COMPLETED; nunca actualizar hash local |
+| credential_operations PASSWORD | PREPARED→PROVIDER_ACCEPTED→COMPLETED; fallo/timeout→RECONCILIATION_REQUIRED; resolución autenticada sin rollback implícito |
+| credential_operations EMAIL | PENDING_VERIFICATION→APPLYING→COMPLETED; envío incierto→SEND_UNKNOWN; cancelación conocida→CANCELED, límite local→EXPIRED; apply/finalización incierta→RECONCILIATION_REQUIRED; SEND_UNKNOWN puede conciliar a pendiente o cancelarse/expirar con guardas antes de APPLYING |
+| identity_email_reservations | REGISTRATION→ACCOUNT tras prueba UID/perfil; IMPORTED→ACCOUNT tras manifiesto; EMAIL_CHANGE→ACCOUNT al confirmar, o liberada al cancelar/expirar conocido; incierto retiene reserva |
+| external_identities | RESERVED→IMPORTED→ACTIVE; conflicto/fallo de credenciales→LOCKED; activar solo tras verificación del manifiesto/proveedor |
 | migration_runs | SNAPSHOT→IMPORTING→IMPORTED→VERIFIED; fallo→FAILED, reanudación controlada solo mismo snapshot/target |
 | deployment_state.mode | CLOSED→VERIFIED→OPEN; fallo o mantenimiento→CLOSED; apertura explícita solo con verificaciones vigentes |
 
@@ -130,22 +183,42 @@ ese presupuesto, rediseñar por conjuntos; no reducir el carrito aprobado silenc
 
 ## Operación de credenciales y carreras
 
-Leer user.version,auth_version,hash y sesión activos; verificar currentPassword fuera
-del batch por coste. Si se cambia password derivar hash nuevo con parámetros vigentes.
-El primer guard dentro del batch exige que usuario, hash y sesión continúen siendo los
-verificados. UNIQUE(email), actualización y evento de seguridad son atómicos. Password
-change añade auth_version+1 y DELETE de todas las sesiones de usuario antes del commit.
-Un fallo de auditoría provoca rollback, no una credencial cambiada sin registro.
+Firebase Auth REST verifica la contraseña actual; comprobar firma/claims, account lookup
+y UID igual al administrador activo. Una reautenticación de otra cuenta no autoriza nada.
+Password solo: batch con CAS de users.version, auth_version, sesión y vínculo de identidad
+crea credential_operations, bloquea usuario, registra corte, revoca sesiones/sobres y audita.
+Solo tras ese commit se llama a Firebase. Guardas de checkout/admin revisan también LOCKED.
 
-Login también usa versión/hash esperado al insertar sesión. Si password change ocurrió
-durante la derivación, no insertar sesión con autenticación antigua. Cada operación
-privilegiada revalida la versión en su guarda. Un request comenzado antes de revocación
-no puede confirmar una mutación después usando su identidad obsoleta.
+Un cambio remoto no comparte transacción con D1. Si la llamada/finalización resulta
+incierta, mantener RECONCILIATION_REQUIRED y bloqueo; no restaurar sesiones ni almacenar
+password para reintento. Nuevo login con UID exacto y credenciales vigentes reconcilia
+operación antes de obtener acceso. Sin prueba suficiente mantener bloqueo y recuperación
+privada auditada. Tras éxito desbloquear sin recrear sesiones; exigir login posterior
+al corte y completar auditoría sin valores secretos.
+
+Correo: crear operación/reserva conservando email actual y sesiones durante espera.
+Inspección OOB no consume código. Solo CAS PENDING_VERIFICATION→APPLYING dentro de batch
+bloquea/revoca; entonces aplicar Firebase y exigir prueba de UID/destino antes del batch
+final. No asumir campos siempre presentes: falta de prueba mantiene bloqueo y exige
+login nuevo con UID exacto. Cancelación/expiración pierde contra APPLYING y no libera
+reserva incierta. SEND_UNKNOWN no significa que Firebase no envió enlace. Cancelar D1
+no revoca OOB remoto: deriva detectada en lookup bloquea acceso y no cambia roles.
+Ambos cambios juntos devuelven 422 antes de cualquier llamada o write. Un pending activo
+impide password u otro email; tras completar, nueva sesión es obligatoria.
+
+Login/refresh usa CAS sobre versión, vínculo, namespace y estado. auth_time debe superar
+firebase_auth_not_before; rechazar igualdad de segundo ambigua. Verificar estado Firebase
+actual mediante accounts:lookup sin caché de revocación. Si no se dispone de validSince/
+passwordUpdatedAt con semántica suficiente para revocación real, R-AUTH falla y no hay
+acceso privado. Un refresh token viejo o JWT aún firmado no puede reconstruir acceso.
+No confiar en claims de rol ni usar email como llave de enlace.
 
 ## Importación y equivalencia
 
 Preservar todas las tablas de negocio, IDs, versiones e historial del snapshot. Esquema
-cloud añade defaults y metadatos, sin cambiar hashes. Roles no se siembran otra vez antes
+cloud añade metadatos, vínculos Firebase y sobres de sesión. Hashes importados quedan
+intactos pero inactivos; credenciales Firebase deben superar el gate STANDARD_SCRYPT remoto
+con cuentas sintéticas del mismo módulo local, nunca con cuentas reales para experimentar. Roles no se siembran otra vez antes
 de importar sus IDs. Los datasets sintéticos usan otro destino y seed independiente.
 
 Exportar por orden: roles/categorías/users, productos, imágenes/inventario/promociones,
@@ -164,6 +237,21 @@ no-op; otro snapshot o contenido con mismo identificador se rechaza. Ningún imp
 reset está disponible desde HTTP. Un destino OPEN con escrituras online nunca se
 sobrescribe; se usa recuperación con conciliación y destino explícito.
 
-Tras restore, nuevo namespace y revocación impiden revivir tokens antiguos. Conciliar
-los eventos de credenciales y sus hashes vigentes junto a los pedidos posteriores al
-backup; no abrir cuentas cuyo estado de seguridad actual no se pueda demostrar.
+La copia de identidades usa manifiesto conjunto user_id/project_id/firebase_uid, email
+normalizado reservado, digest de hash/salt original y resultado por cuenta; el manifiesto
+es privado. Preflight antes de importar detecta UID/email repetidos en origen y destino.
+STANDARD_SCRYPT: memoryCost131072, parallelization1, blockSize8, derivedKeyLength64;
+hex se decodifica a bytes, no a bytes de texto hex. Probar exactamente esos parámetros,
+password original/incorrecto y roles antes de autorizar cualquier cuenta real.
+
+importUsers no comprueba duplicados y no es transaccional con D1. Lotes<=1000, CLOSED,
+checkpoints por usuario/lote y conciliación de éxitos parciales; no repetir ciegamente
+ni sobrescribir un UID existente. La lista de cuentas Firebase/D1 debe conciliar antes
+de marcar ACTIVE. No marcar emailVerified=true sin evidencia de verificación previa.
+
+Tras restore, nuevo namespace y revocación impiden revivir sesiones/sobres restaurados.
+No restaurar passwords Firebase al recuperar D1. Consultar identidad vigente, conciliar
+eventos/operaciones de credenciales y ventas posteriores al backup, volver a fijar corte
+antes de activar acceso. auth:export no incluye necesariamente hash/salt de cuentas
+externas pendientes de rehash; conservar snapshot SQLite protegido y manifiesto como
+parte de recuperación, no declarar que export Firebase garantiza todos los hashes.

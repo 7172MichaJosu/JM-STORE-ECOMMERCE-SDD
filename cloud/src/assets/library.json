@@ -1,0 +1,78 @@
+[
+  {
+    "path": "/images/demo/backpack.jpg",
+    "alt": "backpack"
+  },
+  {
+    "path": "/images/demo/bag.jpg",
+    "alt": "bag"
+  },
+  {
+    "path": "/images/demo/bottle.jpg",
+    "alt": "bottle"
+  },
+  {
+    "path": "/images/demo/camera-jm.png",
+    "alt": "camera jm"
+  },
+  {
+    "path": "/images/demo/chair.jpg",
+    "alt": "chair"
+  },
+  {
+    "path": "/images/demo/desk.jpg",
+    "alt": "desk"
+  },
+  {
+    "path": "/images/demo/fitness.jpg",
+    "alt": "fitness"
+  },
+  {
+    "path": "/images/demo/headphones.jpg",
+    "alt": "headphones"
+  },
+  {
+    "path": "/images/demo/keyboard.jpg",
+    "alt": "keyboard"
+  },
+  {
+    "path": "/images/demo/lamp.jpg",
+    "alt": "lamp"
+  },
+  {
+    "path": "/images/demo/laptop.jpg",
+    "alt": "laptop"
+  },
+  {
+    "path": "/images/demo/monitor-jm.png",
+    "alt": "monitor jm"
+  },
+  {
+    "path": "/images/demo/mug.jpg",
+    "alt": "mug"
+  },
+  {
+    "path": "/images/demo/plant.jpg",
+    "alt": "plant"
+  },
+  {
+    "path": "/images/demo/shoes-jm.png",
+    "alt": "shoes jm"
+  },
+  {
+    "path": "/images/demo/skincare-jm.png",
+    "alt": "skincare jm"
+  },
+  {
+    "path": "/images/demo/soap.jpg",
+    "alt": "soap"
+  },
+  {
+    "path": "/images/demo/sunglasses.jpg",
+    "alt": "sunglasses"
+  },
+  {
+    "path": "/images/demo/watch-jm.png",
+    "alt": "watch jm"
+  }
+]

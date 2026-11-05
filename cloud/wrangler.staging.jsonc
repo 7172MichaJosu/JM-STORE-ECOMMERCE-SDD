@@ -1,32 +1,47 @@
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "jm-store-ecommerce-sdd-staging",
-  "account_id": "",
+  "account_id": "2f8ead11b4406b4356be941ddaf4e2b6",
   "main": "src/worker.js",
   "compatibility_date": "2026-11-04",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": false,
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
   "routes": [],
   "assets": {
     "directory": "../client/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api", "/api/*"],
+    "run_worker_first": [
+      "/api",
+      "/api/*"
+    ]
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "jm-store-ecommerce-sdd-staging-db",
-      "database_id": "",
+      "database_name": "jm-store-ecommerce-d1-staging",
+      "database_id": "ce073401-aae5-4889-8d32-047010650987",
       "migrations_dir": "migrations",
-      "remote": false,
-    },
+      "remote": false
+    }
   ],
   "vars": {
     "ENVIRONMENT": "staging",
-    "APP_ORIGIN": "http://localhost:8787",
-    "SESSION_NAMESPACE": "jm-sdd-local",
-    "DATABASE_IDENTITY": "local-only",
-    "REMOTE_ENABLED": "false",
+    "AUTH_PROVIDER": "firebase",
+    "APP_ORIGIN": "https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev",
+    "SESSION_NAMESPACE": "jm-sdd-staging-firebase-v1",
+    "DATABASE_IDENTITY": "jm-store-ecommerce-d1-staging:ce073401-aae5-4889-8d32-047010650987",
+    "REMOTE_ENABLED": "true",
+    "FIREBASE_EMAIL_ACTION_READY": "false"
   },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  }
 }

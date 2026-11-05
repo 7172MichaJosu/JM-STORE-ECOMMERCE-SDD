@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.js",
-    "dev": "wrangler dev --local --config wrangler.staging.jsonc --persist-to .wrangler/local",
+    "dev": "wrangler dev --local --config wrangler.local.jsonc --persist-to .wrangler/local",
     "test": "vitest run --config vitest.config.js"
   },
   "dependencies": {

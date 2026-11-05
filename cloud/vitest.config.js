@@ -6,9 +6,19 @@ export default defineConfig({
   plugins: [
     cloudflareTest({
       remoteBindings: false,
-      wrangler: { configPath: "./wrangler.staging.jsonc" },
+      // Configure the test Worker directly: never load the operator's .dev.vars.
+      main: fileURLToPath(new URL("./src/worker.js", import.meta.url)),
       miniflare: {
+        compatibilityDate: "2026-11-04",
+        compatibilityFlags: ["nodejs_compat"],
+        d1Databases: ["DB"],
+        outboundService: () => new Response("External requests disabled in local tests", { status: 503 }),
         bindings: {
+          ENVIRONMENT: "local",
+          APP_ORIGIN: "http://localhost:8787",
+          SESSION_NAMESPACE: "jm-sdd-tests",
+          DATABASE_IDENTITY: "local-only",
+          REMOTE_ENABLED: "false",
           TEST_MIGRATIONS: await readD1Migrations(
             fileURLToPath(new URL("./migrations", import.meta.url)),
           ),

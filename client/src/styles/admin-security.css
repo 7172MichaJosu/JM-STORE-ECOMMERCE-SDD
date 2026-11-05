@@ -1,0 +1,7 @@
+.admin-security { max-width: 760px; min-width: 0; }
+.admin-security fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 1rem; min-width: 0; }
+.admin-security fieldset > div > label { display: block; margin-bottom: .5rem; }
+.security-password { display: flex; gap: .5rem; align-items: center; }
+.security-password input { min-width: 0; flex: 1; }
+.security-password button { flex-shrink: 0; padding: .7rem; }
+.admin-security .form-error { margin: 1rem 0; }

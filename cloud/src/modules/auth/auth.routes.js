@@ -6,6 +6,10 @@ import {
 } from "../../../../server/src/lib/passwords.js";
 import { cookieName, cookieOptions } from "../../security/sessions.js";
 import { limit } from "../../security/rate-limit.js";
+import { firebaseAuth } from "../../security/firebase-auth.js";
+import { verifyFirebaseIdToken } from "../../security/firebase-id-token.js";
+import { findFirebaseIdentity } from "../../repositories/firebase-identities.js";
+import { registerFirebaseCustomer } from "./firebase-registration.js";
 export function credentials(body) {
   const email = text(body.email, "email", 3, 254).toLowerCase();
   if (
@@ -23,12 +27,19 @@ export function credentials(body) {
 }
 const response = (req) => ({
   user: req.user,
+  capabilities: { adminSecurity: true, emailVerification: Boolean(req.config?.firebase), emailChangeReady: !req.config?.firebase || req.config.emailActionReady === true },
   csrfToken: req.session.csrf_token,
   expiry: req.session.expires_at,
   cartNotice:
     "Se restauró tu carrito guardado. El carrito de visitante no se fusiona.",
 });
-export function authRoutes() {
+export function authRoutes(config = null) {
+  if (config?.firebase) return firebaseAuthRoutes(config);
+  if (config === null) {
+    const local = authRoutes({});
+    const external = firebaseAuthRoutes();
+    return (req, res, next) => (req.config.firebase ? external : local)(req, res, next);
+  }
   const r = Router();
   r.get("/session", async (req, res) => {
     if (!req.session) await req.createSession();
@@ -72,6 +83,51 @@ export function authRoutes() {
   r.post("/logout", async (req, res) => {
     if (req.session)
       await req.db.run("DELETE FROM sessions WHERE id=?", req.session.id);
+    res.clearCookie(cookieName(req.config), cookieOptions(req.config));
+    res.status(204).end();
+  });
+  return r;
+}
+
+function firebaseAuthRoutes(config) {
+  const r = Router();
+  r.get("/session", async (req, res) => {
+    if (!req.session) await req.createSession();
+    res.json({ data: response(req) });
+  });
+  r.post("/register", limit("register", 5, 900, true), async (req, res) => {
+    const provider = firebaseAuth((config || req.config).firebase);
+    fields(req.body, ["name", "email", "password", "phone"]);
+    const { email, password } = credentials(req.body);
+    const name = text(req.body.name, "name", 2, 100);
+    const phone = req.body.phone ? text(req.body.phone, "phone", 7, 20) : null;
+    await registerFirebaseCustomer(req, provider, { email, password, name, phone });
+    res.status(201).json({ data: response(req) });
+  });
+  r.post("/login", limit("login", 10, 900, true), async (req, res) => {
+    const currentConfig = config || req.config;
+    const provider = firebaseAuth(currentConfig.firebase);
+    fields(req.body, ["email", "password"]);
+    const { email, password } = credentials(req.body);
+    let identity;
+    let verified;
+    try {
+      identity = await provider.signIn(email, password);
+      verified = await verifyFirebaseIdToken(identity.idToken, currentConfig.firebase.projectId);
+      if (verified.uid !== identity.uid || verified.email !== email) throw new Error("Identity mismatch.");
+    } catch {
+      fail(401, "INVALID_CREDENTIALS", "Correo o contraseña incorrectos.");
+    }
+    const user = await findFirebaseIdentity(req.db, verified.uid, email);
+    if (!user) fail(401, "INVALID_CREDENTIALS", "Correo o contraseña incorrectos.");
+    await req.createSession(user.id, {
+      provider: "FIREBASE", firebaseUid: verified.uid, idToken: identity.idToken, refreshToken: identity.refreshToken,
+      auth_version: user.auth_version, password_hash: user.password_hash,
+    });
+    res.json({ data: response(req) });
+  });
+  r.post("/logout", async (req, res) => {
+    if (req.session) await req.db.run("DELETE FROM sessions WHERE id=?", req.session.id);
     res.clearCookie(cookieName(req.config), cookieOptions(req.config));
     res.status(204).end();
   });

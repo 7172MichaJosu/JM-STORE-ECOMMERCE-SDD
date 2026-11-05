@@ -1,7 +1,8 @@
 # Research: Workers, D1 y conservación de JM-STORE
 
 Fecha: 2026-11-04. Evidencia: inspección del repositorio y documentación primaria.
-Las decisiones de Clarify se mantienen; no se consultó ni modificó una cuenta Cloudflare.
+Revisión Firebase de Plan: decisiones de Clarify conservadas y contrastadas con fuentes
+oficiales. Esta revisión no consulta cuentas privadas ni modifica recursos.
 La skill Plan requirió un agente de investigación para contrastar estas tecnologías.
 
 ## R1. Runtime y adaptación de Express
@@ -55,56 +56,79 @@ Fuentes: [D1 batch](https://developers.cloudflare.com/d1/worker-api/d1-database/
 [D1 SQL](https://developers.cloudflare.com/d1/sql-api/sql-statements/),
 [D1 límites](https://developers.cloudflare.com/d1/platform/limits/).
 
-## R4. Hashes y límite de recursos: gate R-AUTH
+## R4. Firebase Authentication y presupuesto Free
 
-**Decision**: preservar exactamente el formato actual
-`scrypt$131072$8$1$<salt-hex>$<derived-key-hex>` y comprobar con native node:crypto.
-No convertir hashes a PBKDF2 ni reducir N. Un cambio de KDF no puede conservar el login
-existente solo transformando un hash, sin conocer la contraseña original.
+**Decision**: Firebase Authentication base Spark, correo y contraseña por Auth REST desde
+Worker. Mantener rutas/formularios; no Firebase SDK cliente ni Admin SDK Worker. Tokens
+solo en sesiones D1 cifradas. Contrato: [firebase-auth.md](contracts/firebase-auth.md).
 
-**Rationale**: crypto scrypt está soportado oficialmente; Argon2 no lo está. Sin embargo,
-el código actual permite maxmem192MiB y el área de trabajo aproximada `128*N*r` es128MiB.
-Workers anuncia128MB/isolate y Free10ms CPU/request. La cifra de trabajo es una estimación
-técnica, no una medición de consumo ni una prueba de imposibilidad del runtime alojado.
-El límite actual workerd de coste N*r*p es2^20, exactamente el coste de estos parámetros.
-Su scrypt con callback invoca la derivación nativa antes de resolver la promesa; async
-no demuestra que quede fuera del presupuesto CPU.
+**Rationale**: scrypt local N131072/r8/p1/key64/salt16 mantiene su protección. La evidencia
+anterior alojada midió hasta602/522ms CPU en registro/login, excediendo Free10ms. Delegar
+el KDF elimina ese trabajo del Worker sin cambiar hashes locales. Fetch, AES-GCM y RS256
+siguen consumiendo recursos: medir cold/warm, refresh, lookup y concurrencia antes de
+aprobar R-AUTH. Espera de red no equivale a CPU; afecta latencia, disponibilidad y cuotas.
 
-**Resolution of unknown**: existe API compatible y se elige conservar la credencial;
-la viabilidad alojada gratuita sigue como criterio de aceptación R-AUTH, no como hecho
-aprobado. Durante Implement se mide primero con cuentas sintéticas, una y varias
-invocaciones concurrentes, antes de importar datos reales. No se creó un Worker para
-medir en Plan. Si falla, detener release y solicitar decisión SDD de arquitectura o
-coste; pagar más CPU no aumenta por sí solo el límite de memoria anunciado. No hay
-proveedor externo ni activación/reset de cuentas autorizado por este diseño.
+**Alternatives considered**: Web SDK con persistencia LOCAL por defecto cambia el modelo
+HttpOnly; se elige backend REST. PBKDF2 barato, hashes en cliente y bajar scrypt están
+descartados. Scrypt en Worker ya falla el presupuesto medido. No Blaze ni Workers Paid.
 
-**Alternatives considered**: KDF más barato degrada seguridad y no verifica hashes
-migrados; hash calculado solo en navegador no sustituye verificación segura de servidor;
-verificador dependiente del equipo local viola independencia. Servicio de identidad o
-credenciales nuevas cambia alcance y requiere decisión explícita.
-
-Fuentes: [crypto Workers](https://developers.cloudflare.com/workers/runtime-apis/nodejs/crypto/),
+Fuentes: [Auth REST](https://firebase.google.com/docs/reference/rest/auth),
+[Web Crypto](https://developers.cloudflare.com/workers/runtime-apis/web-crypto/),
 [límites Workers](https://developers.cloudflare.com/workers/platform/limits/),
-[scrypt Node](https://nodejs.org/docs/latest-v24.x/api/crypto.html#cryptoscryptpassword-salt-keylen-options-callback),
-[workerd límite](https://github.com/cloudflare/workerd/blob/main/src/workerd/io/limit-enforcer.h),
-[workerd scrypt](https://github.com/cloudflare/workerd/blob/main/src/node/internal/crypto_scrypt.ts).
+[persistencia cliente](https://firebase.google.com/docs/auth/web/auth-state-persistence).
 
-## R5. Sesiones y cambio de credenciales
+## R5. Tokens, sesiones y compatibilidad del cambio de correo
 
-**Decision**: D1 es autoridad de sesiones y rate limits; cookie con nombre propio y
-namespace online, versiones de autenticación y control de concurrencia. Password change
-es batch indivisible con revocación total/auditoría; correo solo no fuerza logout.
+**Decision**: validar RS256/issuer/audience/sub/tiempos con certificados oficiales de
+Firebase cacheados según max-age. Roles/estado D1 por proyecto/UID, nunca email o claims
+cliente. Firma válida no acredita sesión vigente. accounts:lookup comprueba el proveedor,
+y D1 mantiene corte/auth_version, sesiones opacas y tokens cifrados. Probar lookup de
+usuario Spark sintético: si no detecta revocación con fiabilidad, no aprobar R-AUTH.
 
-**Rationale**: no conservar MemoryStore ni sesiones en isolates efímeros. La verificación
-de password antes del batch exige CAS contra el hash/version todavía vigente. Migrar
-sesiones usables podría transportar acceso entre entornos; se conserva su dependencia
-de carritos, pero se marca namespace importado no autenticable.
+**Rationale**: los ID tokens duran hasta una hora. Cambios de credenciales invalidan
+refresh tokens; verificar solo firma no bloquea JWT ya emitidos. Cada request privado
+comprueba D1/proveedor. Bloqueo de seguridad y guardas D1 impiden commits antiguos. Un
+corte estricto y prueba del mismo segundo evitan reconstruir sesión con tokens previos.
+Password solo requiere reautenticar en Firebase y comprobar mismo UID; preparar
+operación/bloqueo/revocación D1 antes del cambio remoto y completar auditoría/reconciliación.
+No hay transacción ACID entre Firebase y D1 ni rollback automático del proveedor.
 
-**Alternatives considered**: JWT sin revocación inmediata no satisface Clarify; guardar
-la sesión solo en navegador no permite revocación. Correo externo descartado por Clarify.
+**Decision — correo aprobada en Clarify**: verificar destino antes de actualizar, reservar
+correo pendiente en D1, separar correo/password y revocar todas las sesiones al confirmar.
+Se resuelve el bloqueo documental P-FIREBASE-EMAIL; R-EMAIL será prueba de ejecución.
 
-Fuente para secretos: [Workers secrets](https://developers.cloudflare.com/workers/configuration/secrets/).
-Las reglas concretas de sesión y credenciales provienen de Constitution/spec actuales.
+**Rationale**: accounts:sendOobCode con VERIFY_AND_CHANGE_EMAIL, idToken de reautenticación
+y newEmail no requiere IAM de runtime. accounts:resetPassword con solo oobCode inspecciona
+tipo/email/newEmail; accounts:update con oobCode aplica. Un manejador propio comprueba
+reserva/estado antes de aplicar, sin SDK cliente ni cambio en GET. EEP puede responder
+éxito sin enviar si el destino está ocupado: 200 no acredita entrega ni disponibilidad.
+
+**Alternatives considered**: cambio inmediato contradice Clarify; broker IAM o desactivar
+EEP añade privilegios/riesgo. Envío combinado se rechaza antes de mutar. Reserva D1 con
+registro único compartido por altas/imports cierra carreras entre rutas JM-STORE; vence
+a los 60 minutos como límite local, no como promesa de caducidad Firebase.
+
+**Límite comprobado**: D1 no bloquea signup directo Firebase; cancelar/expirar en D1 no
+invalida necesariamente OOB remoto. No se adoptan blocking functions ni upgrade. Un UID
+externo no enlazado no tiene acceso; colisiones bloquean el cambio, deriva UID/email
+revoca sesiones y exige reconciliación antes de autorizar. No hay transacción Firebase/D1.
+Ensayar código tardío/directo, replay, cancelación concurrente y destino ocupado sin
+promover roles por email ni debilitar credenciales.
+
+**Gate**: diseño coherente con FR-011; CPU, semántica de revocación y enlaces reales aún
+pendientes en Spark sintético. Fallo no permite activar pagos ni debilitar seguridad.
+
+Fuentes: [ID tokens](https://firebase.google.com/docs/auth/admin/verify-id-tokens),
+[sesiones](https://firebase.google.com/docs/auth/admin/manage-sessions),
+[accounts.lookup](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/lookup),
+[UserInfo](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/UserInfo),
+[sendOobCode](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/sendOobCode),
+[comprobar OOB](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/resetPassword),
+[aplicar OOB](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/update),
+[manejador de correo](https://firebase.google.com/docs/auth/custom-email-handler),
+[enumeración protegida](https://docs.cloud.google.com/identity-platform/docs/admin/email-enumeration-protection),
+[API administrativa](https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/projects.accounts/update).
+Consultar referencias Identity Toolkit no requiere activar el upgrade Identity Platform.
 
 ## R6. Migración y recuperación
 
@@ -133,7 +157,7 @@ Fuentes: [import/export](https://developers.cloudflare.com/d1/best-practices/imp
 **Decision**: Worker/D1 y staging nuevos en misma cuenta; no registrar rutas sobre el
 proyecto viejo. Workers Builds conectado al repositorio JM-STORE-ECOMMERCE-SDD con rama
 de producción main solo después de validar. Migración nunca se liga automáticamente al
-push. Config Wrangler explícita se creará en Implement, no en este documento.
+push. Configs Wrangler ya existen; esta revisión no las modifica ni ejecuta CLI.
 
 **Rationale**: Builds admite integración GitHub y Free incluye3000min/mes con una
 compilación concurrente. Los budgets D1 compartidos exigen reservar capacidad sin tocar
@@ -162,9 +186,71 @@ Fuentes: [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds
 [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/),
 [D1 limits](https://developers.cloudflare.com/d1/platform/limits/).
 
+## R8. Spark, configuración y cuotas
+
+**Decision**: Firebase Authentication base Spark, Email/Password y protección de enumeración.
+No upgrade Identity Platform, Blaze, facturación vinculada ni servicios auxiliares de pago.
+API key restringida a servicios usados; no es una credencial de autorización. No activar
+Firestore/Storage/Functions/Analytics por defecto. Auth REST usa APIs Identity Toolkit
+incluidas en Firebase; el nombre de la API no equivale a contratar Identity Platform.
+
+**Rationale**: la documentación distingue Auth base del upgrade opcional Identity Platform.
+La cuota de3000DAU corresponde al upgrade Spark, no se atribuye como límite de Auth base.
+Revalidar cuotas del proyecto antes de configurarlo y detenerse ante requisito de pago.
+
+| Cuota publicada al 2026-11-04 | Condición |
+|---|---|
+| Cuentas registradas | Sin máximo publicado de cuentas registradas; no implica throughput ilimitado |
+| Nuevas cuentas | 100/hora por IP; el proxy Worker obliga a medir la IP efectiva para no asumir capacidad por usuario |
+| Correos de verificación/cambio | 1000/día cada tipo en Spark, si el flujo aprobado los usa |
+| Reset password | 150 correos/día; no se autoriza un reset masivo ni migración por esta vía |
+| Intercambio de tokens | 18000/min/proyecto; sumar renovaciones y llamadas por sesión |
+| Spark con upgrade Identity Platform | 3000DAU Tier1; upgrade explícitamente prohibido en este alcance |
+
+El rate limit de Worker no protege accesos directos a la API key pública de Firebase:
+configurar también cuotas/políticas del proveedor. El proxy consulta lookup por request
+privado para seguridad; estimar tráfico, latencia, D1 y subrequests antes de publicar.
+No caché de revocación ni degradación de seguridad para aparentar capacidad Free.
+
+**Alternatives considered**: Blaze agrega riesgo de coste y no está autorizado; Identity
+Platform no es necesario para Email/Password base. Proveedores adicionales no solicitados.
+
+Fuentes: [Auth base y upgrade](https://firebase.google.com/docs/auth/),
+[límites Auth](https://firebase.google.com/docs/auth/limits),
+[API keys](https://firebase.google.com/docs/projects/api-keys),
+[política password](https://firebase.google.com/docs/auth/web/password-auth).
+
+## R9. Importación scrypt y recuperación de identidades
+
+**Decision**: probar STANDARD_SCRYPT, distinto de SCRYPT modificado de Firebase. Candidato
+memoryCost=131072, blockSize=8, parallelization=1, derivedKeyLength=64; salt16 y key64
+se decodifican de hex a bytes. Parsear formato local exacto y rechazar parámetros distintos,
+no normalizar ni transformar passwords. No presentar compatibilidad como demostrada.
+
+**Rationale**: Firebase documenta importación de hashes standard scrypt y rehash propio al
+primer login correcto. No se ejecuta la derivación local en Worker. Herramienta Node
+privada importa como máximo1000 usuarios por llamada con manifiesto y resultados por
+cuenta; un éxito parcial no abre la tienda. Preflight UID/email porque importUsers no
+comprueba duplicados. Enlazar IDs de negocio/roles mediante manifiesto, nunca por email.
+La prueba con cuenta sintética del mismo módulo local debe pasar remotamente en Spark,
+además de password incorrecto, roles, reinicio, colisiones y reintento sin duplicación.
+
+Conservar snapshot SQLite restaurable/hash/salt sin cambios y export/manifiesto privados.
+Un auth:export Firebase puede omitir hash/salt de cuentas externas aún no rehasheadas;
+no sustituye ese snapshot. Restaurar D1 nunca restaura credenciales Firebase antiguas:
+reconciliar UID/estado vigente, cambiar namespace y revocar sesiones antes de abrir.
+
+**Alternatives considered**: reset masivo, password temporal, plaintext o bajar N no están
+aprobados. Incompatibilidad exacta mantiene R-IDENTITY bloqueado hasta nueva decisión de
+recuperación verificada; no se añade tal alternativa por inferencia en Plan.
+
+Fuentes: [importar usuarios](https://firebase.google.com/docs/auth/admin/import-users),
+[CLI import/export](https://firebase.google.com/docs/cli/auth).
+
 ## Cierre de investigación
 
-No quedan decisiones técnicas sin estrategia documentada ni marcadores NEEDS CLARIFICATION.
-R-AUTH es el principal riesgo conocido y una validación de release aún no ejecutada.
-No se afirma viabilidad gratuita, éxito de migración, pruebas aprobadas ni despliegue.
-Si el gate falla durante implementación, no se acepta una excepción implícita.
+Phase 0 resuelve decisiones de diseño conforme a Constitution/Specify/Clarify. Phase 1
+define registro/login, tokens/sesiones, correo pendiente/reservado, operaciones separadas,
+reconciliación e importación sintética. No quedan decisiones de diseño por aclarar.
+R-AUTH/R-EMAIL/R-IDENTITY son validaciones experimentales pendientes, no pruebas superadas.
+Esta revisión no modifica spec/tasks/sistema ni crea recursos.

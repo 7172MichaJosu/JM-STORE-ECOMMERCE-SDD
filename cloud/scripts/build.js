@@ -1,6 +1,8 @@
-import { copyFileSync } from "node:fs";
+import { copyFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+const images = readdirSync(new URL("../../client/public/images/demo/", import.meta.url)).filter(name => /^[a-z0-9-]+\.(jpg|webp|png)$/.test(name)).map(name => ({ path: "/images/demo/" + name, alt: name.replace(/\.[^.]+$/, "").replaceAll("-", " ") }));
+writeFileSync(new URL("../src/assets/library.json", import.meta.url), JSON.stringify(images, null, 2) + "\n");
 copyFileSync(
   new URL("../src/assets/_headers", import.meta.url),
   new URL("../../client/dist/_headers", import.meta.url),

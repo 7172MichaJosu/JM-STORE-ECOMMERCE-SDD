@@ -7,14 +7,20 @@ import { seedStaging } from "./seed-staging.js";
 if (process.argv.length > 2)
   throw Error("Este comando solo prepara D1 emulada local, sin argumentos.");
 const root = new URL("../", import.meta.url),
-  configPath = fileURLToPath(new URL("wrangler.staging.jsonc", root));
+  configPath = fileURLToPath(new URL("wrangler.local.jsonc", root));
 const config = JSON.parse(await readFile(configPath, "utf8"));
 if (
   config.account_id ||
-  config.d1_databases.some((d) => d.database_id || d.remote) ||
+  config.name !== "jm-store-ecommerce-sdd-local" ||
+  config.d1_databases.length !== 1 ||
+  config.d1_databases[0].database_id ||
+  config.d1_databases[0].remote !== false ||
+  config.vars.ENVIRONMENT !== "local" ||
+  config.vars.SESSION_NAMESPACE !== "jm-sdd-local" ||
+  config.vars.DATABASE_IDENTITY !== "local-only" ||
   config.vars.REMOTE_ENABLED !== "false"
 )
-  throw Error("Usa configuración local sin IDs remotos.");
+  throw Error("Config cloud no coincide con la identidad local aislada.");
 try {
   await writeFile(
     new URL(".dev.vars", root),

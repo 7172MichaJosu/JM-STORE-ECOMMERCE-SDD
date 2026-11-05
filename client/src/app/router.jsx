@@ -15,6 +15,8 @@ import CheckoutPage from "../pages/CheckoutPage.jsx";
 import OrderListPage from "../pages/OrderListPage.jsx";
 import OrderDetailPage from "../pages/OrderDetailPage.jsx";
 import AdminLayout from "../admin/AdminLayout.jsx";
+import AdminSecurityPage from "../pages/admin/AdminSecurityPage.jsx";
+import ConfirmEmailChangePage from "../pages/auth/ConfirmEmailChangePage.jsx";
 import AdminDashboardPage from "../admin/AdminDashboardPage.jsx";
 import AdminProductsPage from "../admin/AdminProductsPage.jsx";
 import AdminProductFormPage from "../admin/AdminProductFormPage.jsx";
@@ -63,6 +65,7 @@ export default function AppRouter() {
           <Route path="/ingresar" element={<LoginPage />} />
           <Route path="/registro" element={<LoginPage register />} />
           <Route path="/admin/ingresar" element={<LoginPage admin />} />
+          <Route path="/admin/mi-cuenta/seguridad/confirmar-correo" element={<ConfirmEmailChangePage />} />
           <Route path="/carrito" element={<CartPage />} />
           <Route element={<Guard role="CUSTOMER" />}>
             <Route path="/cuenta" element={<ProfilePage />} />
@@ -76,6 +79,7 @@ export default function AppRouter() {
           </Route>
           <Route element={<Guard role="ADMIN" />}>
             <Route path="/admin" element={<AdminLayout />}>
+              <Route path="mi-cuenta/seguridad" element={<AdminSecurityPage />} />
               <Route index element={<AdminDashboardPage />} />
               <Route path="productos" element={<AdminProductsPage />} />
               <Route

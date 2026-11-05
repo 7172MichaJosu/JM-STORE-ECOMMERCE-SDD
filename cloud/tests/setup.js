@@ -7,6 +7,8 @@ beforeAll(async () => {
 beforeEach(async () => {
   const tables = [
     "security_events",
+    "credential_operations",
+    "email_claims",
     "mutation_contexts",
     "migration_chunks",
     "migration_runs",

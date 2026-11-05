@@ -8,6 +8,8 @@ server/data/
 backups/
 playwright-report/
 test-results/
+/cloud/test-results-hosted/
+/cloud/test-results-firebase/
 .DS_Store
 Thumbs.db
 *.tmp

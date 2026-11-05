@@ -14,6 +14,7 @@ export const useAuth = () => useContext(Auth),
   useToast = () => useContext(Toast);
 export function Providers({ children }) {
   const [user, setUser] = useState(null),
+    [capabilities, setCapabilities] = useState({ adminSecurity: false, emailVerification: false }),
     [loading, setLoading] = useState(true),
     [cart, setCart] = useState(null),
     [toast, setToast] = useState(null);
@@ -28,7 +29,7 @@ export function Providers({ children }) {
   }, [toast]);
   useEffect(() => {
     bootstrap()
-      .then((s) => setUser(s.user))
+      .then((s) => { setUser(s.user); setCapabilities({ adminSecurity: s.capabilities?.adminSecurity === true, emailVerification: s.capabilities?.emailVerification === true, emailChangeReady: s.capabilities?.emailChangeReady !== false }); })
       .catch((e) => notify(e.message, "error"))
       .finally(() => setLoading(false));
   }, []);
@@ -49,6 +50,7 @@ export function Providers({ children }) {
   async function authenticate(path, body) {
     const s = await api(path, { method: "POST", body });
     setUser(s.user);
+    setCapabilities({ adminSecurity: s.capabilities?.adminSecurity === true, emailVerification: s.capabilities?.emailVerification === true, emailChangeReady: s.capabilities?.emailChangeReady !== false });
     notify(
       s.user.role === "ADMIN"
         ? "Bienvenido al panel JM-STORE"
@@ -59,6 +61,7 @@ export function Providers({ children }) {
   async function logout() {
     await api("/auth/logout", { method: "POST", body: {} });
     setUser(null);
+    setCapabilities({ adminSecurity: false, emailVerification: false });
     await bootstrap(true);
     notify("Sesión cerrada");
   }
@@ -72,6 +75,17 @@ export function Providers({ children }) {
     });
     setCart(c);
     return c;
+  }
+  function clearAuth() {
+    setUser(null);
+    setCart(null);
+    setCapabilities({ adminSecurity: false, emailVerification: false });
+  }
+  async function refreshSession() {
+    const s = await bootstrap(true);
+    setUser(s.user);
+    setCapabilities({ adminSecurity: s.capabilities?.adminSecurity === true, emailVerification: s.capabilities?.emailVerification === true, emailChangeReady: s.capabilities?.emailChangeReady !== false });
+    return s;
   }
   async function add(p) {
     if (user?.role === "ADMIN") {
@@ -91,7 +105,7 @@ export function Providers({ children }) {
   }
   return (
     <Toast.Provider value={notify}>
-      <Auth.Provider value={{ user, loading, authenticate, logout, setUser }}>
+      <Auth.Provider value={{ user, loading, authenticate, logout, setUser, capabilities, clearAuth, refreshSession }}>
         <Cart.Provider value={{ cart, refreshCart, quantity, add }}>
           {children}
           <div className="toast-region" aria-live="polite">

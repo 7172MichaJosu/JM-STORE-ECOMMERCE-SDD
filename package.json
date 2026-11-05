@@ -26,7 +26,11 @@
     "cloud:build": "npm run build && npm run build --workspace cloud",
     "cloud:test": "npm run test --workspace cloud",
     "cloud:dev": "npm run dev --workspace cloud",
-    "cloud:test:e2e": "npm run cloud:build && playwright test --config cloud/playwright.config.js",
+    "cloud:test:e2e": "npm run cloud:build && node cloud/scripts/local-e2e.js",
+    "cloud:test:firebase:e2e": "npm run cloud:build && node cloud/scripts/local-e2e.js --firebase",
+    "cloud:config:check": "node cloud/scripts/check-local-config.js",
+    "cloud:secrets:prepare": "node cloud/scripts/prepare-secret-rotation.js",
+    "cloud:test:hosted": "node cloud/scripts/hosted-e2e.js",
     "cloud:targets:check": "node cloud/scripts/targets.js",
     "cloud:prepare-local": "node cloud/scripts/prepare-local.js"
   },

@@ -53,3 +53,22 @@ test("bindings/origen/namespace y secretos fallan cerrado", () => {
     }),
   ).toThrow();
 });
+test("Firebase es obligatorio fuera de local y exige configuración cifrada completa", () => {
+  const base = { ...env, ENVIRONMENT: "staging" };
+  expect(() => configuration(base)).toThrow();
+  const configured = {
+    ...base,
+    FIREBASE_PROJECT_ID: "jm-test-project",
+    FIREBASE_API_KEY: "synthetic-public-web-api-key-value",
+    FIREBASE_SESSION_ENCRYPTION_KEY: "ab".repeat(32),
+  };
+  expect(configuration(configured).firebase).toMatchObject({ projectId: "jm-test-project", apiKey: "synthetic-public-web-api-key-value" });
+  for (const override of [
+    { AUTH_PROVIDER: "unknown" },
+    { AUTH_PROVIDER: "local" },
+    { FIREBASE_PROJECT_ID: "../bad" },
+    { FIREBASE_API_KEY: "" },
+    { FIREBASE_SESSION_ENCRYPTION_KEY: "short" },
+    { FIREBASE_SESSION_ENCRYPTION_KEY: "ab".repeat(33) },
+  ]) expect(() => configuration({ ...configured, ...override })).toThrow();
+});

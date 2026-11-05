@@ -5,6 +5,7 @@ test("autenticación: CSRF, registro seguro, duplicado y logout", async () => {
   const f = await fixture();
   try {
     const c = f.client();
+    assert.equal(Object.hasOwn((await c.get("/auth/session")).data, "capabilities"), false);
     assert.equal(
       (
         await c.post("/auth/register", {

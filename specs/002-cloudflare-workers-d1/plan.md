@@ -2,7 +2,8 @@
 
 **Branch**: `002-cloudflare-workers-d1` | **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: feature 002, Constitution 1.1.0 y cuatro decisiones aprobadas en Clarify.
+**Input**: feature 002, Constitution 1.1.0 y decisiones vigentes de Clarify, incluida
+Firebase Authentication base Spark para la aplicación online.
 El identificador de feature es lógico; la rama Git inspeccionada sigue siendo `main`.
 
 ## Summary
@@ -12,17 +13,38 @@ usando el adaptador oficial `cloudflare:node/httpServerHandler`. Añadir un paqu
 con entrada y persistencia D1 propias, manteniendo operable el modo Node/Express/SQLite.
 Conservar módulos, reglas, imágenes, colores, temas y recorrido de compra existentes.
 
-Crear posteriormente un Worker y una D1 nuevos en la misma cuenta; ningún recurso,
-binding, ruta o secreto del proyecto antiguo se reutiliza o modifica. Migrar una copia
+Se creó un Worker y una D1 nuevos para staging en la misma cuenta; ningún recurso,
+binding, ruta o secreto del proyecto antiguo se reutilizó o modificó. La copia real
+permanece bloqueada por R-AUTH; cuando se autorice, migrar una copia
 única validada; después del corte los datos online y locales son independientes.
-La nueva sección Mi cuenta → Seguridad verifica contraseña actual, cambia correo sin
-enlace de email y revoca todas las sesiones al cambiar contraseña.
+Firebase administra registro/login y contraseñas mediante Auth REST desde Worker; D1
+conserva perfiles comerciales, roles y sesiones. El runtime cloud deja de ejecutar el KDF
+local; SQLite y sus cuentas mantienen su autenticación. Diseño detallado:
+[contracts/firebase-auth.md](contracts/firebase-auth.md).
 
-**Estado**: diseño de Phase 0 y Phase 1; no código ni recursos creados. La investigación
-no acredita que el scrypt actual quepa en Workers Free. Se conservan hashes y parámetros;
-el gate R-AUTH exige comprobarlo en runtime alojado antes de publicar. Si falla se detiene
-el release y se requiere nueva decisión SDD sobre presupuesto o arquitectura. No se
-debilitan hashes ni se reinician contraseñas para cumplir cuotas.
+**Estado del diseño**: Phase 0/1 reconciliadas con Clarify. El bloqueo anterior
+P-FIREBASE-EMAIL queda resuelto documentalmente: verificar destino antes de cambiar
+correo, reservarlo temporalmente en D1, separar cambios y exigir login tras revocar sesiones.
+No hay excepción a Constitution ni aclaración funcional pendiente. R-AUTH, R-EMAIL y
+R-IDENTITY siguen como gates de ejecución: este Plan no acredita CPU, revocación, entrega
+de enlaces ni compatibilidad de hashes. No autoriza operaciones remotas.
+
+**Estado de implementación (2026-11-04)**: T001–T033 y T048–T056 completadas; T034 ejecutada
+parcialmente y pendiente por R-AUTH. El Worker y D1 nuevos están activos solo en staging;
+D1 tiene 5 categorías y 20 productos sintéticos, sin usuarios ni pedidos reales. La suite
+alojada pasó 3/3, pero el scrypt de registro/login observó hasta 602/522 ms de CPU
+(promedios 451.75/435 ms), por encima del límite Free de 10 ms por invocación. No hubo
+1102; el uso de memoria por invocación no está disponible en esos agregados. La
+importación real queda bloqueada. No se migraron datos reales. US3 (Mi cuenta → Seguridad)
+se implementó y verificó sobre D1 emulada con cuentas sintéticas; no fue desplegada. La
+sesión/roles de US1 ya terminados permiten ese trabajo local independiente, conforme a la
+instrucción del propietario de priorizar T048–T056. Suite cloud36/36, E2E cloud6/6,
+integración SQLite20/20 y E2E SQLite9/9; el CRUD administrativo cloud restante está pendiente.
+Se conservan hashes y parámetros; no se debilitan ni se reinician contraseñas para cumplir
+cuotas. La evidencia anterior corresponde al adaptador scrypt, no prueba Firebase.
+La decisión Firebase sustituye ese diseño cloud; los nuevos gates no se han ejecutado.
+T048–T056 conservan evidencia histórica; adaptar esos módulos a Firebase requerirá futuras
+tareas y pruebas. Esta revisión no cambia tasks.md ni acredita funcionalidad nueva.
 
 ## Technical Context
 
@@ -30,14 +52,21 @@ debilitan hashes ni se reinician contraseñas para cumplir cuotas.
 workerd en Cloudflare, compatibility date propuesta `2026-11-04`.
 
 **Primary Dependencies**: React 19, Vite 7, React Router 7, Express 5 y Helmet existentes;
-adaptador oficial HTTP; Wrangler 4 fijado por lockfile futuro; Vitest y la integración
+adaptador oficial HTTP; Wrangler 4.157.0 fijado por lockfile existente; Vitest y la integración
 oficial Workers para pruebas D1. Sin ORM ni nuevo framework HTTP.
+Auth REST usa fetch; biblioteca JWT propuesta jose ESM/Web Crypto, fijada en lockfile
+solo durante Implement. Admin SDK se limita a herramientas Node privadas de importación,
+no al Worker. No añadir SDK Firebase al cliente en el diseño de backend REST/cookie.
 
 **Storage**: SQLite local actual; D1 nueva por binding `DB`; imágenes y manifiesto público
-en Static Assets (`client/dist`). Sin imágenes en D1 ni nuevo servicio R2.
+en Static Assets (`client/dist`). Firebase conserva credenciales; D1 enlaza UID/perfil/rol
+y guarda tokens por sesión cifrados AES-GCM con clave fuera de la base. Sin Firestore,
+Firebase Storage, imágenes en D1 ni nuevo servicio R2.
 
 **Testing**: suites actuales node:test, Playwright y axe; contratos cloud y pruebas D1
-aisladas; medición alojada solo sobre staging nuevo con datos sintéticos.
+aisladas; JWT firmados sintéticos y mocks locales, pruebas posteriores de Spark para
+importación scrypt, revocación y cuotas. Medición alojada solo en staging nuevo sintético.
+El emulador Firebase no demuestra importación de hashes ni revocación reales.
 
 **Target Platform**: Worker HTTPS con frontend y API del mismo origen; hostname inicial
 Workers `workers.dev`, sin configurar dominios del proyecto antiguo.
@@ -48,14 +77,15 @@ Workers `workers.dev`, sin configurar dominios del proyecto antiguo.
 360/1280 px y cero sobreventa en 100 intentos concurrentes/repetidos. Latencia de usuario
 y CPU de Worker se miden por separado.
 
-**Constraints**: Free priorizado, no garantizado. Consulta oficial del 2026-11-04:
+**Constraints**: únicamente servicios gratuitos; capacidad y disponibilidad no garantizadas. Consulta oficial del 2026-11-04:
 Workers 100 000 solicitudes dinámicas/día, CPU10ms y memoria128MB/isolate; D1 5 millones
 de filas leídas/día, 100 000 escritas/día, 500MB/base y 5GB/10 bases por cuenta. El consumo
 del proyecto antiguo cuenta para las cuotas compartidas. Fuentes en [research.md](research.md).
 
 **Scale/Scope**: preservar carrito de 100 líneas con cantidades1..99, datos migrados sin
-limitar a los 20 productos demo; no pagos reales, correo externo, sincronización continua
-o carga arbitraria de imágenes. No activar pagos ni cambiar plan automáticamente.
+limitar a los 20 productos demo; no pagos reales, sincronización continua o carga arbitraria de imágenes. Firebase base
+Spark es la única integración de identidad aprobada. No Identity Platform, Blaze ni otros
+servicios de pago. No cambiar planes automáticamente; no hay proyecto Firebase creado.
 
 ## Constitution Check
 
@@ -65,16 +95,19 @@ o carga arbitraria de imágenes. No activar pagos ni cambiar plan automáticamen
 |---|---|---|
 | I. SDD | PASS: spec y Clarify presentes | PASS: únicamente artefactos Plan |
 | II. Datos consistentes | PASS: SQLite se conserva y D1 se diseña | PASS: copia única, batch con guardas y reconciliación |
-| III. Seguridad | PASS: sin secretos públicos | PASS de diseño: hashes intactos, reautenticación y revocación |
+| III. Seguridad | PASS: destino verificado y sin secretos públicos | PASS documental: enlace previo, reserva D1, cambios separados, reautenticación, revocación total y reconciliación |
 | IV. Recorrido completo | PASS: se conservan módulos | PASS: contratos de catálogo, clientes, carrito, inventario y pedidos |
 | V. Calidad y recuperación | PASS: validación aislada | PASS: matriz de pruebas, backup y restore |
 | Diseño y accesibilidad | PASS: referencia conservada | PASS: mismo cliente, teclado, axe y ambos temas |
 | Aislamiento Cloudflare | PASS: nuevos recursos | PASS: allowlist, IDs y rutas propios |
 | Migración sin pérdida | PASS: origen intacto | PASS: snapshot cerrado, importación validada y recuperación |
 
-Los PASS son de consistencia documental. No acreditan ejecución ni compatibilidad de
-scrypt en Free. No hay excepción constitucional aprobada: un fallo futuro de R-AUTH
-produce ERROR y bloquea el corte; no autoriza publicar sin autenticación.
+Los PASS son documentales, no pruebas ejecutadas. La revisión posterior Phase 1 satisface
+Constitution 1.1.0 y FR-006/010–018 sin excepciones: Firebase mantiene hashing especializado,
+y SQLite conserva scrypt y datos. Correo pendiente no cambia identidad; al verificar se
+reconcilia con D1 y se cierran sesiones. R-AUTH/R-EMAIL/R-IDENTITY quedan pendientes y
+bloquean publicación/migración, no la conclusión documental de Plan. Una prueba fallida
+vuelve al artefacto SDD correspondiente.
 
 ## Project Structure
 
@@ -90,15 +123,17 @@ specs/002-cloudflare-workers-d1/
 ├── checklists/requirements.md
 └── contracts/
     ├── api.md
+    ├── firebase-auth.md
     ├── ui.md
     └── operations.md
 ```
 
-No se genera `tasks.md` en Plan.
+No se genera ni modifica `tasks.md` en esta actualización Plan.
 
 ### Source Code (repository root)
 
-Propuesta para implementación posterior; estos archivos no se crean ahora:
+Estructura existente y ampliaciones propuestas; se continúa sobre lo implementado, sin
+reiniciar el paquete cloud. Los nuevos adaptadores Firebase no se crean en esta fase:
 
 ```text
 client/                        # actual; agrega AdminSecurityPage y navegación
@@ -108,13 +143,14 @@ cloud/
   package.json
   wrangler.jsonc               # producción nueva, sin secretos
   wrangler.staging.jsonc       # Worker/D1 de prueba propios
+  wrangler.local.jsonc         # emulación local sin IDs remotos
   src/
     worker.js                  # routing Assets/API y adaptador HTTP
     app.js                     # fábrica Express sin fs ni node:sqlite
     config.js                  # bindings y configuración por request
     repositories/              # D1 asíncrono y batch commands
     modules/                   # catálogo/auth/cliente/carrito/checkout/pedidos/admin
-    security/                  # sesiones, CSRF, credenciales y rate limit
+    security/                  # sesiones, CSRF, Firebase REST/JWT/cifrado y rate limit
     assets/                    # manifiesto JSON público importado en build
   migrations/                  # historial D1 independiente de SQLite
   scripts/                     # snapshot/import/verify/backup/release con target explícito
@@ -171,24 +207,67 @@ de autorización y mutaciones sobre primaria; read replication no se habilita en
 
 ### Seguridad administrativa y autenticación
 
-Ruta `/admin/mi-cuenta/seguridad`; API `/api/admin/me/security`. Cambiar correo/password
-separados o juntos, con currentPassword obligatorio y CAS sobre usuario/hash verificado.
-Correo ASCII trim/lowercase<=254, único; password12..128 sin trim y confirmación exacta.
-Correo cambia de inmediato sin email externo. Cambio de password: credencial nueva,
-incremento auth_version, eliminación de todas las sesiones y auditoría dentro de un batch;
-borrar cookie y solicitar nuevo login. Correo solo conserva sesión y refresca perfil.
+Mantener formularios React, /auth/register, /auth/login y /api/admin/me/security.
+El Worker delega credenciales a Firebase Auth REST por HTTPS, sin derivar hashes. Verifica
+ID tokens con RS256 nativo, kid de certificados oficiales, issuer/audience del proyecto,
+sub, exp, iat y auth_time. Cachear solo claves públicas hasta max-age; rechazar alg/issuer
+inesperados, tokens de otro proyecto/tenant, custom tokens y claves caducadas/desconocidas.
+El rol ADMIN sigue en D1, nunca en el cuerpo o claims elegidos por cliente.
 
-Token aleatorio32bytes, hash en D1; cookie online distinta `__Host-jm-sdd.sid`, Secure,
-HttpOnly, SameSite=Lax, Path=/ y sin Domain. Sesión8h absoluta/30min inactiva; sesión
-visitante24h con cookie no persistente. Comprobar rol/estado/auth_version en cada request
-privado. Crear sesión tras login solo si siguen vigentes usuario y hash verificados:
-la carrera login/password-change no puede recrear una sesión revocada.
+Correo ASCII trim/lowercase<=254 único; password12..128 sin trim y confirmación exacta.
+Configurar Firebase policy Require12..128. CurrentPassword se verifica mediante nuevo
+signInWithPassword en Firebase y UID exactamente igual al ADMIN de la sesión D1.
 
-CSRF y Origin exacto en todas las escrituras incluyendo auth. Secretos de cotización y
-HMAC de rate limit independientes. Rate limit persistente D1, no MemoryStore distribuido:
-login10/15min, registro5/15min, seguridad5/15min por admin+IP, checkout20/min y API300/min.
-Identidad IP procede del contexto confiable de Cloudflare, no X-Forwarded-For del cliente.
-Logs solo requestId, operación, IDs y resultado; no cuerpos, direcciones ni credenciales.
+Password solo: batch D1 con CAS crea operación, bloquea cuenta, incrementa auth_version,
+fija corte temporal y revoca todas sus sesiones; después llama accounts:update para
+cambiar password. Firebase y D1 no comparten transacción. Fallo/timeout deja estado
+RECONCILIATION_REQUIRED y acceso bloqueado hasta autenticar y conciliar identidad vigente.
+No anunciar rollback remoto ni guardar/reintentar passwords. Solo tras resultado confirmado
+y auditoría completada desbloquear sin restaurar sesiones, borrar cookie y pedir login.
+El protocolo y recuperación están en [contrato Firebase](contracts/firebase-auth.md).
+
+Correo solo: reautenticar mismo UID, adquirir reserva única D1 y crear operación
+PENDING_VERIFICATION sin cambiar users.email ni revocar sesiones aún. Enviar
+VERIFY_AND_CHANGE_EMAIL por Auth REST. El 202 significa solicitud aceptada, no entrega
+garantizada. Usar manejador propio del enlace sin mutaciones en GET; comprobar código,
+tipo y par de correos antes de consumirlo. CAS excluye confirmación/cancelación/expiración
+concurrentes. Antes de aplicar, bloquear cuenta y revocar todas las sesiones; confirmar
+UID/correo del proveedor y finalizar email/auditoría/reserva en un batch D1. Si es incierto,
+RECONCILIATION_REQUIRED y acceso cerrado; login nuevo concilia el mismo UID.
+Reserva compartida con emails actuales/importados y registros en curso: límite local
+60 minutos sin extender por reintento. Confirmar, cancelar o expirar libera la reserva
+solo con resultado conocido; estados inciertos la retienen hasta reconciliar.
+Protocolo y carreras: [Firebase](contracts/firebase-auth.md) y [modelo](data-model.md).
+
+Enviar correo y contraseña juntos devuelve 422 antes de reautenticar o mutar. Mientras
+haya verificación pendiente no admitir otra operación de credenciales; completar o
+cancelar la primera. Cambios completados requieren login nuevo antes del siguiente.
+D1 protege rutas de JM-STORE; no reserva direcciones dentro de Firebase ni invalida un
+código OOB remoto al cancelar localmente. Llamadas directas pueden causar colisiones o
+deriva: nunca vincular por correo; revocar/bloquear y reconciliar por UID antes de dar
+acceso. No añadir blocking functions, que requieren upgrade.
+
+Cookie opaca aleatoria32bytes, hash D1, __Host-jm-sdd.sid, Secure/HttpOnly/SameSite=Lax,
+Path=/ sin Domain. Mantener 8h absoluta/30min inactiva; visitante24h no persistente.
+UID/proyecto se enlazan al usuario explícitamente, no por email. Tokens ID/refresh solo
+cifrados por sesión en D1 con AES-GCM, AAD y secreto versionado fuera de DB; sin tokens
+en navegador ni claves administrativas Firebase en Worker. No importar cookies locales.
+
+Cada request privado verifica sesión/rol/estado/auth_version en primaria y consulta
+accounts:lookup con el ID token para detectar desactivación/revocación del proveedor.
+Renovar mediante Secure Token API cuando expire y guardar mediante CAS. Comprobar firma
+no detecta por sí sola revocación. Comparar auth_time con corte D1 y estado Firebase;
+misma fracción de segundo ambigua requiere login posterior. Probar en Spark sintético
+que lookup de usuario expone validSince/passwordUpdatedAt con semántica suficiente; si
+falla, ERROR R-AUTH. Proveedor caído falla cerrado, sin fallback scrypt. Guardas de batch
+revalidan versión y sesión para impedir commit con identidad revocada.
+
+CSRF y Origin exacto en escrituras incluyendo auth. Secrets independientes de cotización,
+rate limit y cifrado de tokens. Rate limit D1: login10/15min, registro5/15min,
+seguridad5/15min por admin+IP, checkout20/min y API300/min. La implementación histórica
+US3 usó20/15min en seguridad; esa diferencia queda para futuras tareas Firebase, no se
+considera ya corregida. IP del contexto confiable, no X-Forwarded-For del cliente.
+Logs solo requestId/operación/IDs/resultado; nunca cuerpos, tokens, direcciones o passwords.
 
 ### Migración, respaldos y recuperación
 
@@ -199,6 +278,19 @@ de usuario posteriores. La copia determina el estado de corte; no sincronizar de
 
 Ensayar importación en D1 local y staging sintético. El snapshot real va solo al destino
 cerrado aprobado. Preservar IDs, hashes, precios, stock, relaciones, snapshots y carritos.
+Antes de cuentas reales, R-IDENTITY importa hashes del código SQLite sin modificar origen
+con STANDARD_SCRYPT, candidato N131072/r8/p1/key64/salt16. Probar login con password
+original, rechazo de incorrecta y vínculo UID/roles sobre cuentas sintéticas en Spark
+real; el emulador no basta. Si falla, bloquear migración sin resets ni KDF más barato.
+Admin SDK Node privado con permisos de operador; ninguna clave administrativa en Worker.
+
+Firebase y D1 requieren manifiesto conjunto user_id/project_id/UID. Preflight exhaustivo
+de UID/email, reservas históricas y colisiones: importUsers no comprueba duplicados.
+Reintentar solo después de conciliar estado, nunca sobrescribir ni vincular por email.
+Ambos destinos permanecen cerrados hasta verificar; no existe transacción conjunta.
+auth:export puede omitir hashes externos antes del primer login: conservar snapshot
+original y manifiesto protegido, no depender de ese export como único backup.
+
 Las sesiones copiadas quedan bajo namespace inerte y requieren login nuevo; el carrito
 de cliente se restaura al entrar. No prometer continuidad de cookies invitadas entre
 dominios. No sembrar datos sobre un import ni sobrescribir ventas online posteriores.
@@ -218,14 +310,18 @@ sin contabilizarlas. Volver a SQLite no copia pedidos online automáticamente.
 
 Fuente `7172MichaJosu/JM-STORE-ECOMMERCE-SDD`. Nombres propuestos nuevos
 `jm-store-ecommerce-sdd` / `jm-store-ecommerce-sdd-db`; staging usa sufijo `-staging`.
-No están creados ni comprobados; colisión implica escoger otro nombre, nunca adoptar el
-recurso antiguo. Mantener allowlist de account_id, Worker, UUID D1 y origen confirmados
+Producción no está creada. Staging existente usa Worker jm-store-ecommerce-sdd-staging
+y D1 jm-store-ecommerce-d1-staging. Colisión implica otro nombre, nunca adoptar el recurso
+antiguo. Mantener allowlist de account_id, Worker, UUID D1 y origen confirmados
 por operador. No wildcard routes sobre zonas del proyecto anterior.
 
 La futura configuración Wrangler fija compatibility date, Assets, DB, origen y targets.
 Conforme AGENTS.md, interacción Cloudflare usa `cf` antes de existir config Wrangler;
-una vez creada se permite Wrangler con `--config` explícito. Ahora solo se consultó
-documentación pública. No se almacena ningún secreto en los documentos.
+una vez creada se permite Wrangler con `--config` explícito. Esta actualización Plan solo consulta
+documentación y archivos; no opera recursos remotos. Firebase se creará en futura tarea
+Implement autorizada, tras revisar este Plan y actualizar/aprobar Tasks, con autorización específica de creación. Spark base sin
+cuenta de facturación, Identity Platform ni otros productos innecesarios. No se almacena
+ningún secreto en estos documentos.
 
 Workers Builds se conecta solo al nuevo Worker/repositorio. Primero rama de staging,
 sin D1 producción; `main` para producción después de gates y aprobación de corte. Build
@@ -245,16 +341,35 @@ de seguridad. Revalidar límites al implementar.
 | Gate | Evidencia necesaria antes de publicar |
 |---|---|
 | R-ISOLATION | Cuenta/Worker/D1/origen coinciden con allowlist y son ajenos al proyecto antiguo |
-| R-AUTH | scrypt exacto en staging alojado Free: registro/login/cambio y concurrencia sin incompatibilidad, CPU/memoria excesivos o error1102 |
+| R-AUTH | Auth REST/JWT/cifrado/lookup/refresh en Free: cold/warm y concurrencia con CPU<=10ms, memoria<=128MB, cuotas y sin1102; sin KDF de password en Worker |
+| R-EMAIL | Spark sintético: enlace previo, reserva/colisiones, expiración/cancelación/replay, confirmación sin sesión original, reconciliación UID/email y revocación total; cambios separados |
+| R-IDENTITY | STANDARD_SCRYPT exacto probado remotamente en Spark sintético; password original/UID/roles, colisiones y recuperación verificados |
 | R-DATA | backup legible, restore probado, reconciliación completa y origen intacto |
 | R-COMMERCE | rechazo/reintento, 100 intentos última unidad, idempotencia y rollback inyectado |
 | R-SECURITY | roles, titularidad, CSRF, revocación total, carreras de credenciales y logs seguros |
 | R-UX | 360/1280, temas, teclado, axe, rutas principales y p95 búsqueda<=2s |
 | R-LOCAL | build y suites actuales conservan modo Node/SQLite |
 
-Todos están pendientes de ejecución en implementación. Fallo implica bloquear release;
-R-AUTH no tiene fallback aprobado. Los pendientes humanos SC-001/SC-002 de feature001
+La evidencia histórica se conserva; ningún gate Firebase se ejecutó en Plan. R-EMAIL
+tiene diseño definido y validación pendiente. Fallo de gate bloquea release; R-AUTH no tiene fallback local, pago ni
+downgrade aprobado. Los pendientes humanos SC-001/SC-002 de feature001
 no se consideran completados por este Plan. Validación: [quickstart.md](quickstart.md).
+
+## Trazabilidad de las decisiones aprobadas
+
+| Specify / Clarify | Diseño Phase 1 | Validación futura |
+|---|---|---|
+| FR-006/018: Spark base, correo/password, sin upgrades | Firebase REST; cookies opacas; sin KDF cloud | R-AUTH y preflight Spark/cuotas |
+| FR-006/012/013: UID y roles seguros | RS256, lookup, external_identities, rol/estado/auth_version D1 | JWT adversarios, revocación y roles falsos |
+| FR-010/011: correo verificado antes de aplicar | OOB inspeccionado, CAS APPLYING y reconciliación por UID | R-EMAIL con destino ocupado y respuesta perdida |
+| Clarify: reservar destino hasta fin/cancelación/expiry | registro único de claims + operación EMAIL, límite local 60min | carreras registro/cambio/cancelación/expiry y deriva externa |
+| Clarify: separar correo/password y revocar todas las sesiones | rechazo combinado previo a efectos; nuevo login después de cada cambio | R-SECURITY, sesión actual y otros navegadores |
+| FR-015..017: conservar cuentas/datos y bloquear importación real | STANDARD_SCRYPT sintético remoto, snapshot/manifiesto protegidos | R-IDENTITY/R-DATA antes de cualquier cuenta real |
+| FR-001/003/019/020: aislamiento y continuidad | mismo cliente/diseño; adaptador cloud y D1 separados de SQLite | R-ISOLATION/R-LOCAL/R-UX |
+
+Revisión documental completada; no equivale a aprobación de ejecución ni evidencia de
+Firebase. El siguiente artefacto que requerirá actualización es Tasks, cuando se solicite.
+No se reescriben tareas históricas ni se marcan nuevas tareas como completadas en Plan.
 
 ## Complexity Tracking
 

@@ -11,6 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../app/providers.jsx";
+import AccountNav from "../components/admin/AccountNav.jsx";
 export default function AdminLayout() {
   const { logout } = useAuth(),
     navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function AdminLayout() {
           </div>
         </div>
         <nav>
+          <AccountNav />
           {nav.map(([path, label, Icon]) => (
             <NavLink
               end={!path}

@@ -7,6 +7,9 @@ import {
   fail,
 } from "../../shared/domain/index.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
+import { emailActionRoutes } from "./modules/auth/email-action.routes.js";
+import { securityRoutes } from "./modules/admin/security.routes.js";
+import { adminRoutes } from "./modules/admin/admin.routes.js";
 import { customerOnly, adminOnly } from "./security/sessions.js";
 import { limit } from "./security/rate-limit.js";
 import * as catalog from "./repositories/catalog.js";
@@ -17,6 +20,7 @@ import * as orders from "./repositories/orders.js";
 export function apiRoutes() {
   const r = Router();
   r.use("/auth", authRoutes());
+  r.use("/auth/email-change", emailActionRoutes());
   r.get("/categories", async (req, res) =>
     res.json(await catalog.categories(req.db, req.query)),
   );
@@ -83,17 +87,7 @@ export function apiRoutes() {
   r.get("/orders/:id", async (req, res) =>
     res.json({ data: await orders.view(req.db, req.params.id, req.user.id) }),
   );
-  r.use("/admin", adminOnly, (req, res) =>
-    res
-      .status(503)
-      .json({
-        error: {
-          code: "ADMIN_ADAPTATION_PENDING",
-          message:
-            "Administración cloud pendiente de su fase de implementación.",
-          requestId: req.requestId,
-        },
-      }),
-  );
+  r.use("/admin/me/security", securityRoutes());
+  r.use("/admin", adminRoutes());
   return r;
 }
