@@ -9,8 +9,8 @@ El p95 visual pasó de 4,69/4,55 s a 11,2/11,3 ms; una solicitud por acción, ro
 persistencia comprobados. Pasaron 172 pruebas locales y 5 E2E de carrito en staging.
 Un registro inicial de 11 ms motivó optimización de sesiones de visitante. La repetición
 capturó 67 invocaciones, máximo 9 ms, con registro 4–7 ms y login 4–6 ms.
-**Entrega abierta:** falta publicar estos avances en Git; carga/memoria y aceptación
-integral siguen pendientes. No se activaron
+La mejora está publicada en GitHub. **Entrega integral abierta:** carga/memoria y
+otros pendientes de feature 002 continúan abiertos. No se activaron
 servicios de pago. [Mediciones, pruebas y pendientes](specs/003-cart-response/results.md).
 
 La evidencia siguiente corresponde a la publicación anterior del 5 de noviembre.

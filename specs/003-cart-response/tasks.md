@@ -29,7 +29,7 @@
 - [X] T009 Respaldar/restaurar/verificar D1 staging y publicar solo el Worker nuevo mediante scripts existentes; preservar ADMIN, namespace, secretos, datos y planes. No migrar ni reaprovisionar cuentas reales.
 - [X] T010 Medir con el mismo protocolo `cart-feedback.js --after` y verificar persistencia en staging, ráfagas/fallos controlados, ausencia de duplicados y presupuesto Free observado; no declarar éxito antes de resultados.
 - [X] T011 Documentar resultados antes/después, alcance y límites en `specs/003-cart-response/quickstart.md`, `results.md`, README y docs cloud; conservar pendientes ajenos y declarar emulación móvil.
-- [ ] T012 Escanear contenido Git/historial por secretos y archivos privados; commit/push a `JM-STORE-ECOMMERCE-SDD` solo tras pruebas críticas, verificar remoto y árbol limpio; registrar evidencia después de publicar.
+- [X] T012 Escanear contenido Git/historial por secretos y archivos privados; commit/push a `JM-STORE-ECOMMERCE-SDD` solo tras pruebas críticas, verificar remoto y árbol limpio; registrar evidencia después de publicar.
 
 ## Dependencias y estrategia
 
@@ -63,8 +63,10 @@ La autorización recibida habilita esta repetición gratuita; no modifica pendie
 
 ## Repetición autorizada: resultado
 
-14/15 completas; solo T012 pendiente de commit/push. Pasaron 172 pruebas locales,
+15/15 completas. Pasaron 172 pruebas locales,
 11 comprobaciones API alojadas, cinco E2E alojados y 24 acciones de latencia.
 67 invocaciones capturadas: máximo 9 ms; registro 4–7 ms, login 4–6 ms.
 Carrito visual p95 11,2/11,3 ms en escritorio/móvil emulado, una solicitud por acción.
 El alcance medido pasa; no cierra la aceptación de carga/memoria de feature 002.
+T012 se cerró tras push de `8eaaa5b` a main, SHA remoto coincidente y árbol limpio.
+Este registro documental conserva la evidencia posterior; no modifica código ni staging.

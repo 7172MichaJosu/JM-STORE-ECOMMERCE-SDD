@@ -1,7 +1,7 @@
 # Evidencia del carrito — 6 de noviembre de 2026
 
 El carrito tiene respuesta visual inmediata y persistencia verificada en staging.
-**La repetición de CPU pasó en la muestra medida; commit y push siguen pendientes.**
+**La repetición de CPU pasó en la muestra medida y el código se publicó en GitHub.**
 No se declara terminado el proyecto ni aprobada toda la feature 002.
 
 ## Diagnóstico y medición comparable
@@ -117,8 +117,16 @@ carga, memoria, cuotas compartidas y margen integral de feature 002 siguen pendi
 
 ## Estado SDD y entrega
 
-14/15 tareas completas: T001–T011 y T013–T015. Las cinco pruebas E2E alojadas se
-repitieron con la versión final y pasaron sin reintentos ni omitidas. T012 conserva
-commit/push pendientes.
+15/15 tareas completas. Las cinco pruebas E2E alojadas se repitieron con la versión
+final y pasaron sin reintentos ni omitidas. T012: se escanearon 342 archivos públicos,
+el historial y los 29 archivos preparados; sin secretos conocidos, patrones de
+credenciales ni archivos privados. `git diff --cached --check` pasó.
+
+Código publicado en `main` mediante
+[`8eaaa5b`](https://github.com/7172MichaJosu/JM-STORE-ECOMMERCE-SDD/commit/8eaaa5b504b17d5ce42c857b737ee04c49f257d8).
+El push y el SHA remoto se comprobaron; el árbol quedó limpio antes de este registro
+documental posterior. Se conserva el historial, sin force push ni cambios al repo antiguo.
 Feature 002 mantiene 76/112 tareas completas y sus 36 pendientes anteriores. Los
-reportes detallados están en `cloud/private/` y no se publican.
+reportes detallados están en `cloud/private/` y no se publican. La mejora del carrito
+está verificada para demostración en staging; no se declara producción ni finalización
+integral de JM-STORE.
