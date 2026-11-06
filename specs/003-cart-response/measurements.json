@@ -1,0 +1,391 @@
+{
+  "date": "2026-11-06",
+  "environment": "staging",
+  "version": "12de1af0-2b92-4223-8ad6-0658a43522e4",
+  "syntheticOnly": true,
+  "mobile": "Chromium 360px touch emulation",
+  "phases": [
+    {
+      "phase": "before",
+      "measuredAt": "2026-11-06T14:18:07.260Z",
+      "viewports": [
+        {
+          "width": 1280,
+          "samples": 12,
+          "visualP95Ms": 4685.7,
+          "confirmedP95Ms": 4685.7,
+          "actions": [
+            {
+              "action": "add",
+              "samples": 3,
+              "visualP95Ms": 4685.7,
+              "confirmedP95Ms": 4685.7,
+              "httpP95Ms": 1785.7,
+              "requestCounts": [
+                3,
+                3,
+                3
+              ]
+            },
+            {
+              "action": "increase",
+              "samples": 3,
+              "visualP95Ms": 3289.7,
+              "confirmedP95Ms": 3289.7,
+              "httpP95Ms": 1894.2,
+              "requestCounts": [
+                2,
+                2,
+                2
+              ]
+            },
+            {
+              "action": "decrease",
+              "samples": 3,
+              "visualP95Ms": 3307.8,
+              "confirmedP95Ms": 3307.9,
+              "httpP95Ms": 1944.8,
+              "requestCounts": [
+                2,
+                2,
+                2
+              ]
+            },
+            {
+              "action": "remove",
+              "samples": 3,
+              "visualP95Ms": 3095,
+              "confirmedP95Ms": 3095,
+              "httpP95Ms": 1649.6,
+              "requestCounts": [
+                2,
+                2,
+                2
+              ]
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "samples": 12,
+          "visualP95Ms": 4551.4,
+          "confirmedP95Ms": 4551.5,
+          "actions": [
+            {
+              "action": "add",
+              "samples": 3,
+              "visualP95Ms": 4551.4,
+              "confirmedP95Ms": 4551.5,
+              "httpP95Ms": 1752.4,
+              "requestCounts": [
+                3,
+                3,
+                3
+              ]
+            },
+            {
+              "action": "increase",
+              "samples": 3,
+              "visualP95Ms": 4055.9,
+              "confirmedP95Ms": 4055.9,
+              "httpP95Ms": 2662.2,
+              "requestCounts": [
+                2,
+                2,
+                2
+              ]
+            },
+            {
+              "action": "decrease",
+              "samples": 3,
+              "visualP95Ms": 3108.8,
+              "confirmedP95Ms": 3108.8,
+              "httpP95Ms": 1743.8,
+              "requestCounts": [
+                2,
+                2,
+                2
+              ]
+            },
+            {
+              "action": "remove",
+              "samples": 3,
+              "visualP95Ms": 3010.4,
+              "confirmedP95Ms": 3010.5,
+              "httpP95Ms": 1655.2,
+              "requestCounts": [
+                2,
+                2,
+                2
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "initial-after",
+      "measuredAt": "2026-11-06T14:32:47.098Z",
+      "viewports": [
+        {
+          "width": 1280,
+          "samples": 12,
+          "visualP95Ms": 10.9,
+          "confirmedP95Ms": 2374.4,
+          "actions": [
+            {
+              "action": "add",
+              "samples": 3,
+              "visualP95Ms": 7.5,
+              "confirmedP95Ms": 2004.1,
+              "httpP95Ms": 1991,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "increase",
+              "samples": 3,
+              "visualP95Ms": 8,
+              "confirmedP95Ms": 2374.4,
+              "httpP95Ms": 2356.4,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "decrease",
+              "samples": 3,
+              "visualP95Ms": 9.7,
+              "confirmedP95Ms": 1925.1,
+              "httpP95Ms": 1917,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "remove",
+              "samples": 3,
+              "visualP95Ms": 10.9,
+              "confirmedP95Ms": 1657.8,
+              "httpP95Ms": 1641,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "samples": 12,
+          "visualP95Ms": 11,
+          "confirmedP95Ms": 2241.8,
+          "actions": [
+            {
+              "action": "add",
+              "samples": 3,
+              "visualP95Ms": 6.9,
+              "confirmedP95Ms": 1918.8,
+              "httpP95Ms": 1907.5,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "increase",
+              "samples": 3,
+              "visualP95Ms": 10.1,
+              "confirmedP95Ms": 1858.5,
+              "httpP95Ms": 1850.1,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "decrease",
+              "samples": 3,
+              "visualP95Ms": 10,
+              "confirmedP95Ms": 2241.8,
+              "httpP95Ms": 2231.9,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "remove",
+              "samples": 3,
+              "visualP95Ms": 11,
+              "confirmedP95Ms": 1805.5,
+              "httpP95Ms": 1797.9,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "phase": "after",
+      "measuredAt": "2026-11-06T14:45:45.770Z",
+      "viewports": [
+        {
+          "width": 1280,
+          "samples": 12,
+          "visualP95Ms": 11.2,
+          "confirmedP95Ms": 1956.3,
+          "actions": [
+            {
+              "action": "add",
+              "samples": 3,
+              "visualP95Ms": 6.3,
+              "confirmedP95Ms": 1854.8,
+              "httpP95Ms": 1840.4,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "increase",
+              "samples": 3,
+              "visualP95Ms": 9.4,
+              "confirmedP95Ms": 1824.7,
+              "httpP95Ms": 1813.7,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "decrease",
+              "samples": 3,
+              "visualP95Ms": 8.5,
+              "confirmedP95Ms": 1956.3,
+              "httpP95Ms": 1945.3,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "remove",
+              "samples": 3,
+              "visualP95Ms": 11.2,
+              "confirmedP95Ms": 1808,
+              "httpP95Ms": 1790.4,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        },
+        {
+          "width": 360,
+          "samples": 12,
+          "visualP95Ms": 11.3,
+          "confirmedP95Ms": 2073.8,
+          "actions": [
+            {
+              "action": "add",
+              "samples": 3,
+              "visualP95Ms": 6.8,
+              "confirmedP95Ms": 2034.7,
+              "httpP95Ms": 2018.3,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "increase",
+              "samples": 3,
+              "visualP95Ms": 9.4,
+              "confirmedP95Ms": 2073.8,
+              "httpP95Ms": 2054,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "decrease",
+              "samples": 3,
+              "visualP95Ms": 10.4,
+              "confirmedP95Ms": 1975,
+              "httpP95Ms": 1953.7,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "action": "remove",
+              "samples": 3,
+              "visualP95Ms": 11.3,
+              "confirmedP95Ms": 1658.1,
+              "httpP95Ms": 1646.2,
+              "requestCounts": [
+                1,
+                1,
+                1
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cpu": {
+    "requests": 56,
+    "maxMs": 11,
+    "cartRequests": 36,
+    "cartMaxMs": 10,
+    "budgetMs": 10,
+    "budgetCheckPassed": false,
+    "outcomes": [
+      "ok"
+    ]
+  },
+  "initialCartVersion": "50f3d761-70ec-4696-9d71-9e80d7c81f06",
+  "cpuOptimized": {
+    "requests": 67,
+    "maxMs": 9,
+    "registrationRequests": 3,
+    "registrationMinMs": 4,
+    "registrationMaxMs": 7,
+    "loginMaxMs": 6,
+    "cartRequests": 36,
+    "cartMaxMs": 9,
+    "budgetMs": 10,
+    "budgetCheckPassed": true,
+    "outcomes": [
+      "ok"
+    ],
+    "fullLoadAcceptance": false
+  }
+}

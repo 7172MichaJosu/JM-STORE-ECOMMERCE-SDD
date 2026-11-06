@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 import { fileURLToPath } from "node:url";
 export default defineConfig({
   testDir: "./tests/e2e",
-  testMatch: ["customer-store.spec.js", "admin-security.spec.js"],
+  testMatch: ["customer-store.spec.js", "admin-security.spec.js", "cart-optimistic.spec.js"],
   workers: 1,
   timeout: 60000,
   expect: { timeout: 10000 },

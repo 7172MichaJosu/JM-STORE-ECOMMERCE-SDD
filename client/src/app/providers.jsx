@@ -4,8 +4,10 @@ import {
   useState,
   useEffect,
   useCallback,
+  useSyncExternalStore,
 } from "react";
 import { api, bootstrap } from "../services/api.js";
+import { createCartController } from "../services/cart-controller.js";
 const Auth = createContext(),
   Cart = createContext(),
   Toast = createContext();
@@ -16,8 +18,16 @@ export function Providers({ children }) {
   const [user, setUser] = useState(null),
     [capabilities, setCapabilities] = useState({ adminSecurity: false, emailVerification: false }),
     [loading, setLoading] = useState(true),
-    [cart, setCart] = useState(null),
     [toast, setToast] = useState(null);
+  const [controller] = useState(() => createCartController({
+    load: ({ signal }) => api("/cart", { signal }),
+    write: (id, n, version, { signal }) => api("/cart/items/" + id, {
+      method: n ? "PUT" : "DELETE", signal,
+      body: n ? { quantity: n, cartVersion: version } : { cartVersion: version },
+    }),
+  }));
+  const cartState = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
+  const [sessionEpoch, setSessionEpoch] = useState(0);
   const notify = useCallback(
     (message, type = "success") => setToast({ message, type, id: Date.now() }),
     [],
@@ -33,22 +43,18 @@ export function Providers({ children }) {
       .catch((e) => notify(e.message, "error"))
       .finally(() => setLoading(false));
   }, []);
-  const refreshCart = useCallback(async () => {
-    try {
-      const c = await api("/cart");
-      setCart(c);
-      return c;
-    } catch (e) {
-      if (e.status !== 403) notify(e.message, "error");
-      setCart(null);
-    }
+  const report = useCallback(e => {
+    if (!e.silent && !e.reported) { e.reported = true; notify(e.message, "error"); }
   }, [notify]);
+  const refreshCart = useCallback(() => controller.refresh(), [controller]);
   useEffect(() => {
-    if (!loading && user?.role !== "ADMIN") refreshCart();
-    else setCart(null);
-  }, [user, loading, refreshCart]);
+    controller.reset();
+    if (!loading && user?.role !== "ADMIN") refreshCart().catch(report);
+  }, [user?.id, user?.role, loading, sessionEpoch, controller, refreshCart, report]);
   async function authenticate(path, body) {
+    await controller.flush();
     const s = await api(path, { method: "POST", body });
+    controller.reset(); setSessionEpoch(n => n + 1);
     setUser(s.user);
     setCapabilities({ adminSecurity: s.capabilities?.adminSecurity === true, emailVerification: s.capabilities?.emailVerification === true, emailChangeReady: s.capabilities?.emailChangeReady !== false });
     notify(
@@ -59,30 +65,30 @@ export function Providers({ children }) {
     return s.user;
   }
   async function logout() {
+    controller.reset();
     await api("/auth/logout", { method: "POST", body: {} });
     setUser(null);
     setCapabilities({ adminSecurity: false, emailVerification: false });
     await bootstrap(true);
+    setSessionEpoch(n => n + 1);
     notify("Sesión cerrada");
   }
   async function quantity(productId, n) {
-    const current = await api("/cart");
-    const c = await api("/cart/items/" + productId, {
-      method: n ? "PUT" : "DELETE",
-      body: n
-        ? { quantity: n, cartVersion: current.version }
-        : { cartVersion: current.version },
-    });
-    setCart(c);
-    return c;
+    try { return await controller.quantity(productId, n); }
+    catch (e) { report(e); throw e; }
+  }
+  async function adjust(productId, delta) {
+    try { return await controller.adjust(productId, delta); }
+    catch (e) { report(e); throw e; }
   }
   function clearAuth() {
     setUser(null);
-    setCart(null);
+    controller.reset();
     setCapabilities({ adminSecurity: false, emailVerification: false });
   }
   async function refreshSession() {
     const s = await bootstrap(true);
+    controller.reset(); setSessionEpoch(n => n + 1);
     setUser(s.user);
     setCapabilities({ adminSecurity: s.capabilities?.adminSecurity === true, emailVerification: s.capabilities?.emailVerification === true, emailChangeReady: s.capabilities?.emailChangeReady !== false });
     return s;
@@ -93,20 +99,16 @@ export function Providers({ children }) {
       return;
     }
     try {
-      const current = await api("/cart");
-      await quantity(
-        p.id,
-        (current.items.find((x) => x.product_id === p.id)?.quantity || 0) + 1,
-      );
+      await controller.add(p);
       notify("Producto agregado a tu carrito");
     } catch (e) {
-      notify(e.message, "error");
+      report(e);
     }
   }
   return (
     <Toast.Provider value={notify}>
       <Auth.Provider value={{ user, loading, authenticate, logout, setUser, capabilities, clearAuth, refreshSession }}>
-        <Cart.Provider value={{ cart, refreshCart, quantity, add }}>
+        <Cart.Provider value={{ ...cartState, refreshCart, quantity, adjust, add, flushCart: controller.flush }}>
           {children}
           <div className="toast-region" aria-live="polite">
             {toast && (

@@ -10,12 +10,13 @@ import PaymentChoice from "../components/PaymentChoice.jsx";
 import { Loading, ErrorState } from "../components/EmptyState.jsx";
 export default function CheckoutPage() {
   const addresses = useData("/me/addresses"),
-    { cart, refreshCart } = useCart(),
+    { cart, refreshCart, flushCart, pending, error: cartError, needsSync } = useCart(),
     navigate = useNavigate(),
     [id, setId] = useState(""),
     [quote, setQuote] = useState(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(null);
+  useEffect(() => { setQuote(null); }, [cart?.version, pending]);
   useEffect(() => {
     if (addresses.data?.length) setId(String(addresses.data[0].id));
   }, [addresses.data]);
@@ -40,6 +41,7 @@ export default function CheckoutPage() {
     setBusy(true);
     setError(null);
     try {
+      await flushCart();
       const order = await confirmPayment(quote, outcome);
       await refreshCart();
       navigate("/cuenta/pedidos/" + order.publicId);
@@ -94,7 +96,7 @@ export default function CheckoutPage() {
             {!quote && (
               <button
                 className="btn wide large"
-                disabled={!id || busy}
+                disabled={!id || busy || pending || cartError || needsSync}
                 onClick={review}
               >
                 {busy ? "Revisando…" : "Revisar mi pedido"}
@@ -110,7 +112,7 @@ export default function CheckoutPage() {
         {quote ? (
           <>
             <QuoteSummary quote={quote} />
-            <PaymentChoice onConfirm={confirm} busy={busy} error={error} />
+            <PaymentChoice onConfirm={confirm} busy={busy || pending || !!cartError || needsSync} error={error} />
           </>
         ) : (
           error && (

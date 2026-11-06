@@ -7,26 +7,19 @@ import {
   Plus,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
-import { useCart, useToast, useAuth } from "../app/providers.jsx";
+import { useCart, useAuth } from "../app/providers.jsx";
 import Price from "../components/Price.jsx";
 import EmptyState, { Loading } from "../components/EmptyState.jsx";
 export default function CartPage() {
-  const { cart, quantity } = useCart(),
-    { user } = useAuth(),
-    notify = useToast(),
-    [busy, setBusy] = useState(false);
-  async function change(id, n) {
-    setBusy(true);
-    try {
-      await quantity(id, n);
-    } catch (e) {
-      notify(e.message, "error");
-    } finally {
-      setBusy(false);
-    }
-  }
-  if (!cart) return <Loading />;
+  const { cart, quantity, adjust, pending, error, needsSync, refreshCart } = useCart(),
+    { user } = useAuth();
+  const change = (id, delta) => adjust(id, delta).catch(() => {});
+  if (!cart) return error ? <main className="container page">
+    <div className="cart-sync-error form-error" role="alert">
+      <p>No se pudo cargar el carrito.</p>
+      <button className="btn" onClick={() => refreshCart().catch(() => {})}>Reintentar sincronización</button>
+    </div>
+  </main> : <Loading />;
   return (
     <main className="container page">
       <div className="breadcrumbs">
@@ -43,6 +36,11 @@ export default function CartPage() {
           Seguir descubriendo →
         </Link>
       </div>
+      {pending && <p role="status">Guardando carrito…</p>}
+      {(error || needsSync) && <div className="cart-sync-error form-error" role="alert">
+        <p>No se pudo confirmar el cambio. Revisa el carrito antes de continuar.</p>
+        <button className="btn" onClick={() => refreshCart().catch(() => {})}>Reintentar sincronización</button>
+      </div>}
       {cart.items.length ? (
         <div className="checkout-layout">
           <section className="cart-lines panel">
@@ -61,8 +59,7 @@ export default function CartPage() {
                   )}
                   <button
                     className="remove-link"
-                    disabled={busy}
-                    onClick={() => change(i.product_id, 0)}
+                    onClick={() => quantity(i.product_id, 0).catch(() => {})}
                   >
                     <Trash2 size={14} />
                     Quitar
@@ -71,16 +68,15 @@ export default function CartPage() {
                 <div className="quantity">
                   <button
                     aria-label={"Reducir cantidad de " + i.name}
-                    disabled={busy}
-                    onClick={() => change(i.product_id, i.quantity - 1)}
+                    onClick={() => change(i.product_id, -1)}
                   >
                     <Minus size={14} />
                   </button>
                   <span>{i.quantity}</span>
                   <button
                     aria-label={"Aumentar cantidad de " + i.name}
-                    disabled={busy || i.quantity >= 99}
-                    onClick={() => change(i.product_id, i.quantity + 1)}
+                    disabled={i.quantity >= 99 || i.quantity >= i.available_quantity}
+                    onClick={() => change(i.product_id, 1)}
                   >
                     <Plus size={14} />
                   </button>
@@ -108,6 +104,8 @@ export default function CartPage() {
               <span role="alert" className="form-error">
                 Corrige los artículos sin disponibilidad.
               </span>
+            ) : pending || error || needsSync ? (
+              <button className="btn wide" disabled>Continuar compra</button>
             ) : (
               <Link className="btn wide" to={user ? "/checkout" : "/ingresar"}>
                 Continuar compra

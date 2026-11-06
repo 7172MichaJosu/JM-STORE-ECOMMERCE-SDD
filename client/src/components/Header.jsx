@@ -17,7 +17,7 @@ import { useAuth, useCart } from "../app/providers.jsx";
 import { useTheme } from "../app/ThemeProvider.jsx";
 export default function Header() {
   const { user } = useAuth(),
-    { cart } = useCart(),
+    { cart, pending } = useCart(),
     { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false),
     cartButton = useRef();
@@ -73,6 +73,7 @@ export default function Header() {
             </Link>
             <button
               className="cart-button"
+              data-cart-pending={pending}
               onClick={() => setOpen((v) => !v)}
               ref={cartButton}
               aria-label="Abrir carrito"

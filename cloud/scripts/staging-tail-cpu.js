@@ -9,7 +9,8 @@ const observations = []; let buffer = "", ran = false, exceeded = false;
 const hosted = process.argv.includes("--hosted");
 const commerce = process.argv.includes("--commerce");
 const crud = process.argv.includes("--crud");
-const smoke = process.argv.includes("--smoke") || commerce || hosted || crud;
+const cart = process.argv.includes("--cart");
+const smoke = process.argv.includes("--smoke") || commerce || hosted || crud || cart;
 let finishRun;
 const completed = new Promise(resolve => { finishRun = resolve; });
 let smokeExitCode = null;
@@ -43,7 +44,7 @@ const fallback = setTimeout(() => { if (!ran && child.exitCode === null) { ran =
 async function run() {
   await new Promise(resolve => setTimeout(resolve, 1200));
   if (smoke) {
-    const probe = spawn(process.execPath, hosted ? [root + "cloud/scripts/hosted-e2e.js", "--target", "staging"] : [root + "cloud/scripts/staging-smoke.js", ...(commerce ? ["--commerce"] : crud ? ["--crud"] : [])], { cwd: root, stdio: "inherit" });
+    const probe = spawn(process.execPath, cart ? [root + "cloud/scripts/cart-feedback.js", "--after"] : hosted ? [root + "cloud/scripts/hosted-e2e.js", "--target", "staging"] : [root + "cloud/scripts/staging-smoke.js", ...(commerce ? ["--commerce"] : crud ? ["--crud"] : [])], { cwd: root, stdio: "inherit" });
     smokeExitCode = await new Promise(resolve => probe.on("exit", resolve));
     await new Promise(resolve => setTimeout(resolve, 5000));
     return;
@@ -67,7 +68,7 @@ const byPath = Object.values(observations.reduce((groups, row) => {
   const group = groups[row.path] ||= { path: row.path, requests: 0, minCpuMs: Infinity, maxCpuMs: 0 };
   group.requests++; group.minCpuMs = Math.min(group.minCpuMs, row.cpuMs); group.maxCpuMs = Math.max(group.maxCpuMs, row.cpuMs); return groups;
 }, {}));
-const report = { collectedAt: new Date().toISOString(), mode: hosted ? "hosted" : commerce ? "commerce" : crud ? "crud" : smoke ? "smoke" : "probe", observations, exceeded, unknownKeys, smokeExitCode };
+const report = { collectedAt: new Date().toISOString(), mode: cart ? "cart" : hosted ? "hosted" : commerce ? "commerce" : crud ? "crud" : smoke ? "smoke" : "probe", observations, exceeded, unknownKeys, smokeExitCode };
 await writeFile(new URL("../private/staging-tail-cpu.json", import.meta.url), JSON.stringify(report), { mode: 0o600 });
 console.log(JSON.stringify({ byPath, measuredRequests: observations.length, maxCpuMs: Math.max(0, ...observations.map(row => row.cpuMs)), exceededFreeCpu: exceeded, metricsPresent: observations.length > 0, nonSensitiveEventFieldNames: unknownKeys, probeAttempted: ran, smokeExitCode, childExitCode: child.exitCode, noRawEventsPrinted: true }, null, 2));
 if (exceeded) process.exitCode = 2;

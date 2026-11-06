@@ -4,6 +4,17 @@
 
 **Staging:** https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev
 
+Actualización del 6 de noviembre: carrito optimista publicado y verificado en 1280/360 px.
+El p95 visual pasó de 4,69/4,55 s a 11,2/11,3 ms; una solicitud por acción, rollback y
+persistencia comprobados. Pasaron 172 pruebas locales y 5 E2E de carrito en staging.
+Un registro inicial de 11 ms motivó optimización de sesiones de visitante. La repetición
+capturó 67 invocaciones, máximo 9 ms, con registro 4–7 ms y login 4–6 ms.
+**Entrega abierta:** falta publicar estos avances en Git; carga/memoria y aceptación
+integral siguen pendientes. No se activaron
+servicios de pago. [Mediciones, pruebas y pendientes](specs/003-cart-response/results.md).
+
+La evidencia siguiente corresponde a la publicación anterior del 5 de noviembre.
+
 Estado del 5 de noviembre de 2026 para entregar el 6 a las 08:00 (America/Lima):
 Fetch nativo, Firebase Spark y D1 persistente. El ADMIN personal está habilitado en
 `/admin/ingresar`; el registro público crea clientes. Funcionan catálogo/búsqueda,

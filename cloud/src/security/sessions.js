@@ -88,7 +88,10 @@ export async function sessionMiddleware(req, res, next) {
     }
   }
   req.session = s;
-  if (s)
+  // Guests have an absolute expiry only; last_seen_at is used exclusively for
+  // authenticated idle expiry. Avoid an unused D1 write (also on register/login,
+  // which replace the guest session). Keep touching every authenticated request.
+  if (s?.user_id)
     await db.run(
       "UPDATE sessions SET last_seen_at=? WHERE id=?",
       new Date().toISOString(),

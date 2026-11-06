@@ -14,7 +14,7 @@
     "dev": "npm run dev --workspace server",
     "build": "npm run build --workspace client",
     "start": "node server/src/server.js",
-    "test": "node --test server/tests/unit/*.test.js",
+    "test": "node --test server/tests/unit/*.test.js client/tests/*.test.js",
     "test:integration": "node --test --test-concurrency=1 server/tests/contract/*.test.js server/tests/integration/*.test.js",
     "test:e2e": "npm run build && playwright test",
     "db:migrate": "node server/scripts/migrate.js",

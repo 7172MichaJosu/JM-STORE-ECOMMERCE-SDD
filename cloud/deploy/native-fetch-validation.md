@@ -1,5 +1,13 @@
 # Validación de demostración: Fetch nativo
 
+**Actualización 6 de noviembre:** la UI del carrito se publicó después en la versión
+`50f3d761-70ec-4696-9d71-9e80d7c81f06` y se optimizó después en
+`12de1af0-2b92-4223-8ad6-0658a43522e4`. Tras detectar 11 ms en registro, la repetición
+autorizada midió 67 invocaciones con máximo 9 ms. Respuesta visual y persistencia
+pasaron; la muestra no cierra las pruebas de carga/memoria de feature 002.
+[Evidencia actual y pendientes](../../specs/003-cart-response/results.md).
+Las cifras y versión que siguen son evidencia histórica de la publicación anterior.
+
 **Estado, 5 de noviembre de 2026**: apto para los recorridos de demostración verificados
 en staging. Entrega solicitada: 6 de noviembre, 08:00 America/Lima. La aceptación integral
 de la feature y producción permanecen pendientes.

@@ -28,6 +28,7 @@ if (
   throw Error("El destino alojado no coincide con la allowlist de staging.");
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const cart = process.argv.includes("--cart");
 const playwright = join(root, "node_modules", "playwright", "cli.js");
 const admin = JSON.parse(await readFile(new URL("../private/staging-synthetic-admin.json", import.meta.url), "utf8"));
 if (!admin.synthetic || !/^jm-sdd-stage-[\da-f-]+@example\.test$/.test(admin.email)) throw Error("Synthetic ADMIN required; personal account prohibited.");
@@ -40,6 +41,7 @@ const result = spawnSync(
     env: {
       ...process.env,
       JM_STORE_STAGING_ORIGIN: target.origin,
+      JM_CART_FEEDBACK_TESTS: cart ? "1" : "0",
       TEST_ADMIN_EMAIL: admin.email,
       TEST_ADMIN_PASSWORD: admin.password,
     },
