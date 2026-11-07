@@ -1,7 +1,7 @@
 # Quickstart de validación — PWA JM-STORE
 
-Guía técnica para las fases Tasks/Implement. Este documento no crea recursos ni autoriza
-despliegue. No usar datos/credenciales reales; staging remoto requiere autorización aparte.
+Guía de desarrollo y validación local de la implementación PWA. No usar datos/credenciales
+reales; staging remoto requiere autorización aparte.
 
 ## Requisitos previos
 
@@ -25,10 +25,24 @@ Resultado esperado: Vite produce frontend para `client/dist`, Cloud build empaqu
 Static Assets. Después de Implement, confirmar en esos artefactos `manifest.webmanifest`,
 iconos, `offline.html`, worker generado y lista precache. Ningún comando de este paso publica.
 
-## Validación automatizada prevista
+## Validación automatizada local disponible
 
-Las pruebas PWA deben agregarse en Tasks antes de implementarse; no existen aún comandos
-específicos `pwa:check` ni tests PWA y no deben tratarse como aprobados. Criterios mínimos:
+La implementación incluye pruebas Node y Playwright. Desde la raíz:
+
+```powershell
+npm run test:pwa
+npm run test:e2e
+npm run cloud:test
+npm run cloud:test:e2e
+npm run cloud:test:firebase:e2e
+```
+
+Las pruebas cloud usan Miniflare, D1 temporal y FirebaseDouble con salida de red bloqueada.
+El script de build cloud usa exclusivamente Wrangler `--dry-run`; no despliega. Los iconos
+versionados se regeneran desde su SVG maestro con `node client/scripts/generate-icons.js`
+(requiere el navegador Chromium de Playwright instalado).
+
+Criterios comprobados por estas suites:
 
 1. Parsear manifest; comprobar nombre, start/scope same-origin, standalone, colores y que
    cada `src` responda correctamente con MIME/dimensiones declaradas.
@@ -73,9 +87,56 @@ de staging nuevo, D1 existente intacta y cuentas/datos sintéticos. No cambiar p
 Worker antiguo, SQLite, dominio, base de datos, cuenta Firebase, plan Cloudflare o Firebase.
 Revisar Free/Spark y consumo; si se presenta requisito de pago, detenerse.
 
-## Resultado actual del Plan
+## Recuperación de una publicación PWA futura
 
-No se ejecutaron los comandos anteriores ni pruebas de la aplicación durante Plan. El
-diagnóstico de Specify encontró ausencia de manifest/iconos y SW en un perfil limpio; no
-acreditó instalación en Android/Windows. Ver [diagnosis.md](diagnosis.md) y criterios en
+Antes de cualquier publicación autorizada, conservar versión de release y artefactos
+anteriores. Para volver a un cliente conocido, construir una revisión nueva que incluya
+ese cliente y el endpoint válido `/service-worker.js`, con su allowlist correspondiente;
+mantener la espera normal hasta cerrar ventanas. No regresar ciegamente a un release sin
+ese endpoint: el SW ya instalado podría continuar activo aunque el sitio haya retrocedido.
+Verificar el ensayo de dos versiones y la limpieza exclusiva de caché propia antes de
+publicar la recuperación. No usar Clear-Site-Data, borrar cookies/localStorage ni restaurar
+D1 para revertir archivos de interfaz. Una desactivación de emergencia exige un procedimiento
+específico autorizado y probado; no se realiza en esta fase local.
+
+## Resultado de Implement local — 2026-11-06
+
+Manifest, iconos JM, registro, caché estática, aviso offline y espera de actualización están
+implementados y probados localmente. La revisión PWA ya está publicada en staging con
+autorización expresa; la instalación física continúa pendiente. Resultado publicado:
+[evidence/pwa-staging.md](evidence/pwa-staging.md). Resultados locales y límites:
+[evidence/pwa-validation.md](evidence/pwa-validation.md). El diagnóstico inicial permanece
+en [diagnosis.md](diagnosis.md); contratos en
 [contracts/installation.md](contracts/installation.md) y [contracts/cache-and-updates.md](contracts/cache-and-updates.md).
+
+## Instalar la revisión publicada
+
+Abrir en una pestaña normal (fuera de incógnito):
+https://jm-store-ecommerce-sdd-staging.josue-hinostroza-27.workers.dev
+
+**Chrome Android**:
+1. Abrir el enlace directamente en Chrome, con conexión.
+2. Tocar el botón «Instalar JM-STORE» si aparece; alternativamente ⋮ → «Instalar y crear
+   acceso directo» → «Instalar». Según versión puede aparecer como «Añadir a pantalla de inicio».
+3. Confirmar el nombre JM-STORE y la instalación. Abrir desde el icono JM en el launcher.
+
+**Chrome Windows**:
+1. Abrir el enlace en Chrome.
+2. Pulsar el icono de instalación de la barra de direcciones o ⋮ → «Enviar, guardar y
+   compartir» → «Instalar página como aplicación».
+3. Confirmar «Instalar» y abrir JM-STORE desde Inicio o `chrome://apps`.
+
+**Edge Windows**:
+1. Abrir el enlace en Edge.
+2. Pulsar el icono de instalación de la barra de direcciones o ⋯ → «Más herramientas» →
+   «Aplicaciones» → «Instalar este sitio como una aplicación».
+3. Confirmar la instalación y abrir desde Inicio o `edge://apps`.
+
+En el dispositivo comprobar nombre/icono JM, ventana propia y navegación. Si ya había una
+revisión abierta, cerrar todas las ventanas/pestañas JM-STORE y abrir de nuevo; no borrar
+datos del sitio ni cookies para actualizar. El catálogo y las compras necesitan conexión.
+Registrar los resultados físicos antes de marcar T026/T027; no basta con emular la pantalla.
+
+Referencias de pasos de navegador: [Chrome Android](https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DAndroid&hl=es),
+[Chrome ordenador](https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DDesktop&hl=es),
+[Microsoft Edge](https://support.microsoft.com/es-es/edge/install-manage-or-uninstall-apps-in-microsoft-edge).

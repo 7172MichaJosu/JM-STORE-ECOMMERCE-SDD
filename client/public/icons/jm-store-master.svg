@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">JM-STORE</title>
+  <rect width="512" height="512" fill="#0044ff"/>
+  <rect x="101" y="151" width="310" height="253" rx="38" fill="#ffe600"/>
+  <path d="M183 167v-29a73 73 0 0 1 146 0v29" fill="none" stroke="#ffe600" stroke-width="25" stroke-linecap="round"/>
+  <path d="M151 224h76v77q0 48-46 48-31 0-44-23l25-20q7 13 18 13 13 0 13-19v-46h-42z M249 224h34l27 53 27-53h34v121h-32v-66l-27 48h-5l-27-48v66h-31z" fill="#0036b9"/>
+  <path d="M133 380h246" stroke="#0036b9" stroke-width="6" stroke-linecap="round" opacity=".25"/>
+</svg>

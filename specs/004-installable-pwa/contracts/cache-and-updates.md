@@ -51,3 +51,8 @@ correcto y política que permita el registro; confirmar que CSP existente no lo 
 La caché de borde de Cloudflare Static Assets es distinta de Cache Storage y no autoriza
 cachear respuestas personales. Ningún secreto, cookie, UID/claim, email o código de acción
 se serializa a recursos estáticos.
+
+Compatibilidad de Static Assets: el precache puede seguir exclusivamente la canonicalización
+same-origin `/offline.html` → `/offline`, status 200, MIME `text/html`, sin `no-store` ni
+`private`; Workbox copia la respuesta para el fallback. Se rechazan todos los otros destinos
+redirigidos. No se modifica la política de HTML del Worker ni se amplía la lista de recursos.

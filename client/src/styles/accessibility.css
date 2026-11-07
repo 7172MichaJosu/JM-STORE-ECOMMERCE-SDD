@@ -76,3 +76,4 @@ html[data-theme="dark"] .footer-bottom > b {
 html[data-theme="dark"] .text-button {
   color: #8fb7ff;
 }
+.connection-notice { padding: 12px 20px; background: var(--surface); color: var(--text); border-bottom: 2px solid #ffe600; text-align: center; font-weight: 600; }

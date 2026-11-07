@@ -6,14 +6,19 @@
 
 **Organización**: tareas agrupadas por historias de usuario. Las pruebas aparecen antes de la implementación correspondiente; su inclusión responde a los criterios explícitos de aceptación y la petición del usuario.
 
-**Restricciones de ejecución**: todas las tareas están pendientes. Este documento no autoriza cambios ahora. Las pruebas remotas requieren aprobación explícita cuando corresponda; nunca se modifica producción, el Worker antiguo, SQLite, D1 ni cuentas reales. Cloudflare Free y Firebase Spark se mantienen.
+**Estado de Implement (2026-11-06)**: 28/32 tareas completadas y verificadas. Staging PWA publicado con autorización expresa; evidencia en [evidence/pwa-staging.md](evidence/pwa-staging.md) y [evidence/pwa-validation.md](evidence/pwa-validation.md). T026–T028 (dispositivos físicos) y parte de T031 siguen pendientes. Producción, Worker antiguo, SQLite y datos reales se conservan; no se cambian planes.
+
+**Confirmación manual del propietario (2026-11-06)**: el propietario informó que JM-STORE
+quedó instalada como PWA en su teléfono Android y laptop Windows. No se especificaron
+navegador/versión, modelo ni apertura posterior desde el launcher/menú del sistema; por eso
+esta evidencia parcial no completa T026 ni permite inferir tabletas, Edge u otros dispositivos.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: dependencias de build/test sin cambios en runtime ni servicios.
 
-- [ ] T001 [P] Añadir `vite-plugin-pwa` y `workbox-precaching` como dependencias de desarrollo fijadas en `client/package.json` y `package-lock.json`; no añadir dependencias de runtime.
-- [ ] T002 [P] Añadir el script `test:pwa` con Node `node:test` en `package.json` para ejecutar `client/tests/pwa/*.test.js`.
+- [X] T001 [P] Añadir `vite-plugin-pwa` y `workbox-precaching` como dependencias de desarrollo fijadas en `client/package.json` y `package-lock.json`; no añadir dependencias de runtime.
+- [X] T002 [P] Añadir el script `test:pwa` con Node `node:test` en `package.json` para ejecutar `client/tests/pwa/*.test.js`.
 
 ---
 
@@ -21,7 +26,7 @@
 
 **Purpose**: fixtures locales aislados para validar PWA sin redirección a servicios reales.
 
-- [ ] T003 Crear helpers Playwright en `tests/e2e/pwa/fixtures.js` para contexto limpio, control de red, varias páginas y evidencia sin secretos; reutilizar el servidor local de base temporal de `tests/e2e/server.js`.
+- [X] T003 Crear helpers Playwright en `tests/e2e/pwa/fixtures.js` para contexto limpio, control de red, varias páginas y evidencia sin secretos; reutilizar el servidor local de base temporal de `tests/e2e/server.js`.
 
 **Checkpoint**: dependencias y harness de prueba listos; todos los escenarios usan datos sintéticos y endpoints locales.
 
@@ -35,17 +40,17 @@
 
 ### Tests for User Story 1
 
-- [ ] T004 [P] [US1] Crear pruebas de contrato del manifest, campos y referencias de iconos en `client/tests/pwa/manifest.test.js`.
-- [ ] T005 [P] [US1] Crear prueba E2E de instalación voluntaria, ayuda accesible y fallback web si no existe `beforeinstallprompt` en `tests/e2e/pwa/install-help.spec.js`.
+- [X] T004 [P] [US1] Crear pruebas de contrato del manifest, campos y referencias de iconos en `client/tests/pwa/manifest.test.js`.
+- [X] T005 [P] [US1] Crear prueba E2E de instalación voluntaria, ayuda accesible y fallback web si no existe `beforeinstallprompt` en `tests/e2e/pwa/install-help.spec.js`.
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Crear arte maestro cuadrado del símbolo bolsa/JM respetando el diseño propio en `client/public/icons/jm-store-master.svg`.
-- [ ] T007 [P] [US1] Exportar y validar iconos PNG JM de 192×192, 512×512 y 512×512 `purpose: maskable` en `client/public/icons/jm-store-192.png`, `client/public/icons/jm-store-512.png` y `client/public/icons/jm-store-maskable-512.png`.
-- [ ] T008 [P] [US1] Crear `client/public/manifest.webmanifest` con nombre JM-STORE, id/scope/start_url del origen, display standalone, colores JM y referencias exactas same-origin a iconos.
-- [ ] T009 [US1] Enlazar manifest e icono JM en el `<head>` de `client/index.html` sin alterar rutas SPA ni añadir claims comerciales.
-- [ ] T010 [US1] Implementar estado/prompt de instalación progresivo y accesible en `client/src/pwa/install-prompt.js` y `client/src/components/Header.jsx`; mostrar solo cuando el navegador lo permita y conservar navegación web.
-- [ ] T011 [US1] Ejecutar build Vite y verificar manifest, MIME, status, dimensiones, referencias, icono visible y deep links en `client/dist/manifest.webmanifest`, `client/dist/icons/` y `tests/e2e/pwa/install-help.spec.js`.
+- [X] T006 [US1] Crear arte maestro cuadrado del símbolo bolsa/JM respetando el diseño propio en `client/public/icons/jm-store-master.svg`.
+- [X] T007 [P] [US1] Exportar y validar iconos PNG JM de 192×192, 512×512 y 512×512 `purpose: maskable` en `client/public/icons/jm-store-192.png`, `client/public/icons/jm-store-512.png` y `client/public/icons/jm-store-maskable-512.png`.
+- [X] T008 [P] [US1] Crear `client/public/manifest.webmanifest` con nombre JM-STORE, id/scope/start_url del origen, display standalone, colores JM y referencias exactas same-origin a iconos.
+- [X] T009 [US1] Enlazar manifest e icono JM en el `<head>` de `client/index.html` sin alterar rutas SPA ni añadir claims comerciales.
+- [X] T010 [US1] Implementar estado/prompt de instalación progresivo y accesible en `client/src/pwa/install-prompt.js` y `client/src/components/Header.jsx`; mostrar solo cuando el navegador lo permita y conservar navegación web.
+- [X] T011 [US1] Ejecutar build Vite y verificar manifest, MIME, status, dimensiones, referencias, icono visible y deep links en `client/dist/manifest.webmanifest`, `client/dist/icons/` y `tests/e2e/pwa/install-help.spec.js`.
 
 **Checkpoint**: identidad de instalación funciona y el usuario puede abrir la tienda instalada o continuar en web.
 
@@ -59,12 +64,12 @@
 
 ### Tests for User Story 2
 
-- [ ] T012 [P] [US2] Crear prueba E2E de sesión, carrito persistente, checkout simulado e historial con FirebaseDouble/D1 local en `cloud/tests/e2e/pwa-continuity.spec.js`.
-- [ ] T013 [P] [US2] Crear prueba E2E de login/logout ADMIN, denegación CUSTOMER, cambio de sesión y ausencia de tokens/datos privados en el almacenamiento PWA en `cloud/tests/e2e/pwa-authorization.spec.js`.
+- [X] T012 [P] [US2] Crear prueba E2E de sesión, carrito persistente, checkout simulado e historial con FirebaseDouble/D1 local en `cloud/tests/e2e/pwa-continuity.spec.js`.
+- [X] T013 [P] [US2] Crear prueba E2E de login/logout ADMIN, denegación CUSTOMER, cambio de sesión y ausencia de tokens/datos privados en el almacenamiento PWA en `cloud/tests/e2e/pwa-authorization.spec.js`.
 
 ### Integration and Verification for User Story 2
 
-- [ ] T014 [US2] Incluir `pwa-continuity.spec.js` y `pwa-authorization.spec.js` en `cloud/playwright.config.js` y `cloud/playwright.firebase.config.js`; ejecutar `npm run cloud:test:e2e` y `npm run cloud:test:firebase:e2e` con D1 emulada y proveedores sintéticos, registrando resultados sin valores secretos.
+- [X] T014 [US2] Incluir `pwa-continuity.spec.js` y `pwa-authorization.spec.js` en `cloud/playwright.config.js` y `cloud/playwright.firebase.config.js`; ejecutar `npm run cloud:test:e2e` y `npm run cloud:test:firebase:e2e` con D1 emulada y proveedores sintéticos, registrando resultados sin valores secretos.
 
 **Checkpoint**: la app instalada sigue utilizando autenticación/sesión y persistencia de negocio existentes; no hay cambios de API, D1, roles o Firebase.
 
@@ -78,17 +83,17 @@
 
 ### Tests for User Story 3
 
-- [ ] T015 [P] [US3] Crear pruebas unitarias de allowlist/hash/namespace y exclusión de HTML, `images/demo/**`, queries y `/api/**` en `client/tests/pwa/cache-policy.test.js`.
-- [ ] T016 [P] [US3] Crear E2E de navegación offline y API network-only, comprobando que no se almacenen autenticación, catálogo o respuestas personalizadas, en `tests/e2e/pwa/offline.spec.js`.
-- [ ] T017 [P] [US3] Crear E2E de dos ventanas y versión en espera; comprobar ausencia de `skipWaiting`, `clients.claim`, reload forzado y reenvío de checkout en `tests/e2e/pwa/update-lifecycle.spec.js`.
+- [X] T015 [P] [US3] Crear pruebas unitarias de allowlist/hash/namespace y exclusión de HTML, `images/demo/**`, queries y `/api/**` en `client/tests/pwa/cache-policy.test.js`.
+- [X] T016 [P] [US3] Crear E2E de navegación offline y API network-only, comprobando que no se almacenen autenticación, catálogo o respuestas personalizadas, en `tests/e2e/pwa/offline.spec.js`.
+- [X] T017 [P] [US3] Crear E2E de dos ventanas y versión en espera; comprobar ausencia de `skipWaiting`, `clients.claim`, reload forzado y reenvío de checkout en `tests/e2e/pwa/update-lifecycle.spec.js`.
 
 ### Implementation for User Story 3
 
-- [ ] T018 [P] [US3] Crear `client/public/offline.html` con aviso accesible “Sin conexión” y opción de reintentar; excluir catálogo, cuenta, precios, formularios y acciones de compra.
-- [ ] T019 [P] [US3] Crear `client/service-worker.js` con Workbox `injectManifest`, allowlist solo de bundles JS/CSS fingerprinted, iconos JM y `/offline.html`; rutas de navegación online-only con fallback offline estático, `/api/**` siempre network-only y limpieza limitada a caches JM-STORE propias; no llamar `skipWaiting()` ni `clients.claim()`.
-- [ ] T020 [US3] Registrar el Service Worker same-origin de forma no bloqueante y registrar fallos recuperables en `client/src/pwa/register.js`; conectar el registro desde `client/src/main.jsx` solo en build de producción/preview.
-- [ ] T021 [US3] Configurar `vite-plugin-pwa` en modo `injectManifest` en `client/vite.config.js`, incluyendo solo `client/public/offline.html`, iconos JM y bundles permitidos; desactivar auto-update y mantener precache fuera de HTML y catálogo.
-- [ ] T022 [US3] Ejecutar pruebas unitarias y E2E de caché/lifecycle y comprobar las respuestas estáticas/API, headers `no-store`, CSP y MIME en `client/tests/pwa/`, `tests/e2e/pwa/` y `cloud/tests/e2e/`.
+- [X] T018 [P] [US3] Crear `client/public/offline.html` con aviso accesible “Sin conexión” y opción de reintentar; excluir catálogo, cuenta, precios, formularios y acciones de compra.
+- [X] T019 [P] [US3] Crear `client/service-worker.js` con Workbox `injectManifest`, allowlist solo de bundles JS/CSS fingerprinted, iconos JM y `/offline.html`; rutas de navegación online-only con fallback offline estático, `/api/**` siempre network-only y limpieza limitada a caches JM-STORE propias; no llamar `skipWaiting()` ni `clients.claim()`.
+- [X] T020 [US3] Registrar el Service Worker same-origin de forma no bloqueante y registrar fallos recuperables en `client/src/pwa/register.js`; conectar el registro desde `client/src/main.jsx` solo en build de producción/preview.
+- [X] T021 [US3] Configurar `vite-plugin-pwa` en modo `injectManifest` en `client/vite.config.js`, incluyendo solo `client/public/offline.html`, iconos JM y bundles permitidos; desactivar auto-update y mantener precache fuera de HTML y catálogo.
+- [X] T022 [US3] Ejecutar pruebas unitarias y E2E de caché/lifecycle y comprobar las respuestas estáticas/API, headers `no-store`, CSP y MIME en `client/tests/pwa/`, `tests/e2e/pwa/` y `cloud/tests/e2e/`.
 
 **Checkpoint**: contenido offline limitado a recursos aprobados; la compra, auth, cambios de cuenta y stock requieren conectividad y confirmación remota.
 
@@ -102,13 +107,13 @@
 
 ### Tests for User Story 4
 
-- [ ] T023 [P] [US4] Crear pruebas responsive y accesibles con axe en 360/768/1280 px, ambas orientaciones tablet, teclado, foco, temas claro/oscuro y reduced-motion en `tests/e2e/pwa/responsive.spec.js`.
+- [X] T023 [P] [US4] Crear pruebas responsive y accesibles con axe en 360/768/1280 px, ambas orientaciones tablet, teclado, foco, temas claro/oscuro y reduced-motion en `tests/e2e/pwa/responsive.spec.js`.
 
 ### Implementation and Device Verification for User Story 4
 
-- [ ] T024 [US4] Corregir únicamente regresiones responsive/accesibles que introduzca la affordance PWA en `client/src/styles/layout.css`, `client/src/styles/accessibility.css` y `client/src/components/Header.jsx`; mantener identidad JM y p95 visual del carrito ≤100 ms.
-- [ ] T025 [US4] Solo después de aprobar todos los gates locales y recibir autorización explícita de la operación, publicar el build revisado exclusivamente en `jm-store-ecommerce-sdd-staging` con `cloud/wrangler.staging.jsonc`; no migrar datos, cambiar D1, producción ni Worker antiguo.
-- [ ] T026 [US4] Tras staging autorizado, instalar realmente en teléfono Android Chrome y en Windows desktop/laptop Chrome y Edge; relanzar desde launcher/menú del OS y registrar nombre, icono JM, standalone y resultado por navegador en `specs/004-installable-pwa/evidence/pwa-validation.md`.
+- [X] T024 [US4] Corregir únicamente regresiones responsive/accesibles que introduzca la affordance PWA en `client/src/styles/layout.css`, `client/src/styles/accessibility.css` y `client/src/components/Header.jsx`; mantener identidad JM y p95 visual del carrito ≤100 ms.
+- [X] T025 [US4] Solo después de aprobar todos los gates locales y recibir autorización explícita de la operación, publicar el build revisado exclusivamente en `jm-store-ecommerce-sdd-staging` con `cloud/wrangler.staging.jsonc`; no migrar datos, cambiar D1, producción ni Worker antiguo.
+- [ ] T026 [US4] **Parcialmente verificada**: el propietario confirmó instalación PWA en teléfono Android y laptop Windows (sin datos de navegador/versión ni relanzamiento). Completar la matriz Android Chrome y Windows Chrome/Edge; relanzar desde launcher/menú del OS y registrar nombre, icono JM, standalone y resultado por navegador en `specs/004-installable-pwa/evidence/pwa-validation.md` antes de marcar la tarea.
 - [ ] T027 [US4] En staging autorizado, repetir cobertura táctil/teclado y orientaciones en tablet Android Chrome y tablet Windows con navegadores compatibles; registrar modelo/versión/resultado en `specs/004-installable-pwa/evidence/pwa-validation.md`; dejar pendiente cada dispositivo no disponible en vez de sustituirlo por emulación.
 - [ ] T028 [US4] Si se dispone de un dispositivo iPadOS físico, registrar comprobación adicional de Safari en `specs/004-installable-pwa/evidence/pwa-validation.md` sin convertirla en bloqueo de aceptación.
 
@@ -120,10 +125,10 @@
 
 **Purpose**: regresión de calidad, seguridad, cuotas y documentación final sin declarar pruebas pendientes como aprobadas.
 
-- [ ] T029 Ejecutar suites completas `npm run test`, `npm run test:integration`, `npm run test:e2e`, `npm run cloud:test`, `npm run cloud:test:e2e` y `npm run cloud:test:firebase:e2e`; corregir regresiones y resumir resultados en `specs/004-installable-pwa/evidence/pwa-validation.md`.
-- [ ] T030 Auditar precache y Cache Storage después de catálogo, login/logout, cambio de usuario, carrito y checkout; verificar cero `/api/**`, cookie, token, email, dirección, catálogo o respuesta privada en `client/tests/pwa/` y `tests/e2e/pwa/`.
+- [X] T029 Ejecutar suites completas `npm run test`, `npm run test:integration`, `npm run test:e2e`, `npm run cloud:test`, `npm run cloud:test:e2e` y `npm run cloud:test:firebase:e2e`; corregir regresiones y resumir resultados en `specs/004-installable-pwa/evidence/pwa-validation.md`.
+- [X] T030 Auditar precache y Cache Storage después de catálogo, login/logout, cambio de usuario, carrito y checkout; verificar cero `/api/**`, cookie, token, email, dirección, catálogo o respuesta privada en `client/tests/pwa/` y `tests/e2e/pwa/`.
 - [ ] T031 Medir regresión visual del carrito (p95 ≤100 ms, con escenario de red demorada de 1.5 s), revisar tamaño/tiempos del build y consumo/limitaciones de Cloudflare Free/Firebase Spark; dejar evidencia sin activar servicios de pago en `specs/004-installable-pwa/evidence/pwa-validation.md`.
-- [ ] T032 Actualizar guía y resultados reales en `specs/004-installable-pwa/quickstart.md` y `specs/004-installable-pwa/evidence/pwa-validation.md`, marcando como pendientes las pruebas manuales de dispositivos que no se hayan realizado.
+- [X] T032 Actualizar guía y resultados reales en `specs/004-installable-pwa/quickstart.md` y `specs/004-installable-pwa/evidence/pwa-validation.md`, marcando como pendientes las pruebas manuales de dispositivos que no se hayan realizado.
 
 ---
 
@@ -199,5 +204,5 @@ Task: T017 E2E lifecycle con dos ventanas
 - Cada tarea operativa continúa `[ ]` hasta estar implementada y verificada; no marcar por diseño.
 - `[P]` solo marca tareas sobre archivos independientes, sin dependencia pendiente.
 - Las pruebas PWA y manuales se consideran requisito; ningún resultado se ha ejecutado en esta fase Tasks.
-- T025 requiere autorización expresa cuando se ejecute; no autoriza publicar ahora ni tocar producción.
+- T025 se completó en staging con autorización expresa; esta tarea no autoriza publicaciones futuras, producción ni cambios del Worker antiguo.
 - No realizar commit/push/merge como parte de estas tareas sin instrucción separada.

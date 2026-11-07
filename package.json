@@ -11,6 +11,7 @@
     "node": ">=24.15.0 <25"
   },
   "scripts": {
+    "test:pwa": "node --test client/tests/pwa/*.test.js",
     "dev": "npm run dev --workspace server",
     "build": "npm run build --workspace client",
     "start": "node server/src/server.js",

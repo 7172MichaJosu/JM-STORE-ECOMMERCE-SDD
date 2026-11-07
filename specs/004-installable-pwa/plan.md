@@ -156,6 +156,14 @@ No crear un segundo frontend/backend, Worker, base de datos, dominio ni servicio
 
 ## Phase 0 Research
 
+**Compatibilidad verificada durante Implement, 2026-11-06**: Workers Static Assets
+canonicaliza `/offline.html` a `/offline`. Para conservar los headers/routing actuales,
+el precache admite únicamente esa redirección exacta same-origin a la página pública,
+con status 200 y MIME HTML; sigue rechazando otras redirecciones y `no-store`/`private`.
+Workbox normaliza la respuesta antes de usarla como fallback de navegación. No cambian
+API, Worker, bindings o esquema. Esta precisión técnica mantiene Q1–Q3 y el alcance aprobado.
+Fuente: [HTML handling de Cloudflare](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/).
+
 Decisiones, alternativas, fuentes oficiales y limitaciones de navegador: [research.md](research.md).
 
 ## Phase 1 Design

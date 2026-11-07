@@ -15,6 +15,7 @@ import SearchBar from "./SearchBar.jsx";
 import MiniCart from "./MiniCart.jsx";
 import { useAuth, useCart } from "../app/providers.jsx";
 import { useTheme } from "../app/ThemeProvider.jsx";
+import { InstallAppButton, ConnectionNotice } from "../pwa/InstallAppButton.jsx";
 export default function Header() {
   const { user } = useAuth(),
     { cart, pending } = useCart(),
@@ -40,6 +41,7 @@ export default function Header() {
           </Link>
           <SearchBar />
           <div className="header-actions">
+            <InstallAppButton />
             <button
               className="icon-button theme-toggle"
               onClick={toggle}
@@ -110,6 +112,7 @@ export default function Header() {
           <MiniCart onClose={() => setOpen(false)} returnFocus={cartButton} />
         )}
       </header>
+      <ConnectionNotice />
     </>
   );
 }
